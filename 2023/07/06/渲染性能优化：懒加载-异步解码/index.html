@@ -163,7 +163,7 @@
 <p>而今天，我们在懒加载实现上，有了更多不一样的选择。下面会介绍两种方式并进行测验。</p>
 <ul>
 <li>content-visibility: auto</li>
-<li>loading&#x3D;“lazy” 和 decoding&#x3D;“async”</li>
+<li>loading&#x3D;”lazy” 和 decoding&#x3D;”async”</li>
 </ul>
 <h1 id="1-使用-content-visibility-实现延迟渲染"><a href="#1-使用-content-visibility-实现延迟渲染" class="headerlink" title="1 使用 content-visibility 实现延迟渲染"></a>1 使用 content-visibility 实现延迟渲染</h1><h2 id="1-1-What"><a href="#1-1-What" class="headerlink" title="1.1 What"></a>1.1 What</h2><p> <code>content-visibility： auto</code></p>
 <p>其控制一个元素，直到需要它的时候才会渲染</p>
@@ -198,7 +198,7 @@
 <ul>
 <li><strong>初始化时请求全部发送了：</strong>即便当前页面可视区域外的内容未被渲染，但是图片资源的 HTTP&#x2F;HTTPS 请求，依然会在页面一开始被触发</li>
 </ul>
-<h3 id="1-3-1-利用-contain-intrinsic-size-解决滚动条抖动问题"><a href="#1-3-1-利用-contain-intrinsic-size-解决滚动条抖动问题" class="headerlink" title="1.3.1 利用 contain-intrinsic-size 解决滚动条抖动问题"></a>1.3.1 利用 contain-intrinsic-size 解决滚动条抖动问题</h3><p>当我们使用 <code>content-visibility: auto</code>，那么可视区外的元素高度通常就为 0，所以会抖动。</p>
+<h3 id="1-3-1-利用-contain-intrinsic-size-解决滚动条抖动问题"><a href="#1-3-1-利用-contain-intrinsic-size-解决滚动条抖动问题" class="headerlink" title="1.3.1 利用 contain-intrinsic-size 解决滚动条抖动问题"></a>1.3.1 利用 contain-intrinsic-size 解决滚动条抖动问题</h3><p>当我们使用 <code>content-visibility: auto</code>，那么可视区外的元素高度通常就为 0，滚动条自动，元素展示，宽高就非0，所以会出现抖动抽搐。</p>
 <p>如果能准确知道设置了<strong>元素在渲染状态下的高度</strong>，就可以避免抖动现象了。</p>
 <p>因此我为元素加上 contain-intrinsic-size 属性：</p>
 <figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.container-box</span> &#123;</span><br><span class="line">  <span class="attribute">contain</span>-intrinsic-size: <span class="number">320px</span>;</span><br><span class="line">  <span class="attribute">content-visibility</span>: auto;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -207,7 +207,7 @@
 
 <p>效果：</p>
 <div align="center">
-    <img src="/2023/07/06/解决抖动.webp" style="height: 500px; width: 500px;">
+    <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/解决抖动.webp" style="height: 500px; width: 500px;">
 </div>
 
 
@@ -223,7 +223,7 @@
 <p>属性的值为 loading&#x3D;”lazy” 会告诉浏览器，如果图像位于可视区时，则立即加载图像，并在用户滚动到它们附近时获取其他图像。</p>
 <p>loading&#x3D;”lazy” 到（2023-07-08）的兼容性，还是非常不错的：</p>
 <div align="center">
-    <img src="/2023/07/06/loading兼容.png" style="height: 500px; width: 500px;">
+    <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/loading兼容.png" style="height: 300px; width: 900px;">
 </div>
 
 <h2 id="2-2-异步解码-decoding-x3D-”async”"><a href="#2-2-异步解码-decoding-x3D-”async”" class="headerlink" title="2.2 异步解码 decoding&#x3D;”async”"></a>2.2 异步解码 decoding&#x3D;”async”</h2><p><code>HTMLImageElement</code> 接口的 <code>decoding</code> 属性用于告诉浏览器使用何种方式解析图像数据。</p>
@@ -233,11 +233,11 @@
 <li>auto: 默认模式，表示不偏好解码模式。由浏览器决定哪种方式更适合用户。</li>
 </ul>
 <p>浏览器在进行图片渲染展示的过程中，是需要对图片文件进行解码的，这一个过程快慢与图片格式有关。</p>
-<p>而如果我们不希望图片的渲染解码影响页面的其他内容的展示，可以使用 decoding&#x3D;async 选项</p>
+<p>而如果我们不希望图片的渲染解码影响页面的其他内容的展示，可以使用 async 选项</p>
 <p>这样，浏览器便会异步解码图像，加快显示其他内容，优化页面渲染性能。</p>
 <p>同样的，我们来看看到（2023-07-08），decoding&#x3D;”async” 的兼容性，整体还是非常不错的，作为渐进增强方案使用，是非常好的选择。</p>
 <div align="center">
-    <img src="/2023/07/06/decoding兼容.png" style="height: 500px; width: 500px;">
+    <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/decoding兼容.png" style="height: 300px; width: 900px;">
 </div>
 
 <h2 id="2-3-Demo"><a href="#2-3-Demo" class="headerlink" title="2.3 Demo"></a>2.3 Demo</h2><p>和上面的Demo差不多，准备14张图片的页面，每个图片url大小不一</p>
@@ -253,7 +253,7 @@
 
 <p>效果：</p>
 <div align="center">
-    <img src="/2023/07/06/懒加载.webp" style="height: 500px; width: 500px;">
+    <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/懒加载.webp" style="height: 500px; width: 500px;">
 </div>
 
 <p>可以看到，初次加载时，只会请求当前页面的资源，随着可视区域变化，再进行资源请求</p>
@@ -263,7 +263,7 @@
 
 <p>可以看到，初次页面加载时会请求所有资源，<strong>页面 Load 事件完成的时间竟然有 14.96 s</strong></p>
 <div align="center">
-    <img src="/2023/07/06/对比实验1.png" style="height: 500px; width: 500px;">
+    <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/对比实验1.png" style="height: 130px; width: 800px;">
 </div>
 
 
@@ -273,7 +273,7 @@
 
 <p>首次进入页面仅请求显示在屏幕上的图片，<strong>页面 Load 事件完成的时间为 597 ms</strong></p>
 <div align="center">
-    <img src="/2023/07/06/对比实验2.png" style="height: 500px; width: 500px;">
+    <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/对比实验2.png" style="height: 130px; width: 800px;">
 </div>
 
 <p>当页面滚动时，显示的图片才会继续发送请求</p>
