@@ -159,7 +159,7 @@
 <h1 id="1-nextTick-是什么"><a href="#1-nextTick-是什么" class="headerlink" title="1 nextTick 是什么"></a>1 nextTick 是什么</h1><p>由于 vue 中 DOM更新 是异步的</p>
 <p>当你设置 <code>vm.someData = &#39;new value&#39;</code>，该数据不会立即重新渲染。</p>
 <p>多数情况我们不需要关心这个过程，但是如果你要<strong>基于更新后的 DOM 状态来执行自己的逻辑</strong>，就需要 nextTick 保证你的逻辑执行在<strong>完成更新 DOM之后</strong>了。</p>
-<h1 id="2-源码分析"><a href="#2-源码分析" class="headerlink" title="2 源码分析"></a>2 源码分析</h1><h2 id="2-1-两个数组"><a href="#2-1-两个数组" class="headerlink" title="2.1 两个数组"></a>2.1 两个数组</h2><p>为了实现 nextTick，VCue中维护了2个数组：</p>
+<h1 id="2-源码分析"><a href="#2-源码分析" class="headerlink" title="2 源码分析"></a>2 源码分析</h1><h2 id="2-1-两个数组"><a href="#2-1-两个数组" class="headerlink" title="2.1 两个数组"></a>2.1 两个数组</h2><p>为了实现 nextTick，Vue中维护了2个数组：</p>
 <ul>
 <li>queue</li>
 <li>callbacks</li>
@@ -230,7 +230,6 @@
 <h1 id="3-流程图"><a href="#3-流程图" class="headerlink" title="3 流程图"></a>3 流程图</h1><div align="center">
     <img src="/2023/07/08/Vue2源码：nextTick原理/main.png" style="height: 500px; width: 600px;">
 </div>
-
 
     </div>
 
