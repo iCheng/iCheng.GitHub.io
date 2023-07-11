@@ -204,7 +204,7 @@
 
 <h2 id="2-4-Observer类"><a href="#2-4-Observer类" class="headerlink" title="2.4 Observer类"></a>2.4 Observer类</h2><p><code>Observer</code> 构造函数会真正的将数据标记为响应式</p>
 <ul>
-<li><p>首先给属性增加一个<strong>不可枚举的 <code>__ob__</code> 对象</strong> (为啥要不可枚举？为了不影响实际开发，比如 <code>for..in..</code> 循环的时候不遍历到 <code>__ob__</code> 属性)</p>
+<li><p>首先给属性增加一个<strong>不可枚举的 <code>__ob__</code> 对象</strong> ，表明<strong>已被观测</strong> (为啥要不可枚举？为了不影响实际开发，比如 <code>for..in..</code> 循环的时候不遍历到 <code>__ob__</code> 属性)</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">def</span>(value, <span class="string">&#x27;__ob__&#x27;</span>, <span class="variable language_">this</span>)      <span class="comment">//给属性增加一个**不可枚举的 `__ob__` 对象**</span></span><br></pre></td></tr></table></figure>
 </li>
 <li><p>然后就是判断当前属性<strong>是数组还是对象</strong></p>
@@ -243,7 +243,7 @@
 
 
 <h3 id="2-4-2-如果是对象"><a href="#2-4-2-如果是对象" class="headerlink" title="2.4.2 如果是对象"></a>2.4.2 如果是对象</h3><p>遍历对象的每个元素，执行 <code>defineReactive()</code> 方法逻辑如下:</p>
-<p>首先 new Dep()，该 dep 在后面 get set 时会使用，这个时候就能明白了数据对象中每个数据字段都有属于自己的 <code>dep</code> 常量（这里涉及到依赖收集理念）</p>
+<p>首先 new Dep()，该 dep 在后面 get set 时都会使用这个<strong>闭包产生的 dep</strong>，这个时候就能明白了数据对象中每个数据字段都有属于自己的 <code>dep</code> 常量（这里涉及到依赖收集理念）</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> dep = <span class="keyword">new</span> <span class="title class_">Dep</span>()</span><br></pre></td></tr></table></figure>
 
 
@@ -294,7 +294,16 @@
     
 
     <div class="container post-prev-next">
-        <a class="next"></a>
+        
+        <a href="/2023/07/11/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E4%BE%9D%E8%B5%96%E6%94%B6%E9%9B%86%20%E6%B4%BE%E5%8F%91%E6%9B%B4%E6%96%B0/" class="next">
+            <div>
+                <div class="text">
+                    <p class="label">Next</p>
+                    <h3 class="title">Vue2源码：依赖收集 派发更新</h3>
+                </div>
+            </div>
+        </a>
+        
         
         <a href="/2023/07/09/%E4%BD%BF%E7%94%A8%20JS%20%E6%89%A9%E5%B1%95%20Markdown%20%E8%AF%AD%E6%B3%95/" class="prev">
             <div>

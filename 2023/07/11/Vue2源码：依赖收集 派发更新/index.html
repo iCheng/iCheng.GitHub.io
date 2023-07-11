@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  
+  <title>Vue2源码：依赖收集 派发更新 - iCheng</title>
+  
+    <link rel="shortcut icon" href="/theme-img/logo.png">
+  
+  
+    <link rel='manifest' href='/manifest.json'>
+  
+
+  
+  
+  
+  <meta property="og:title" content="Vue2源码：依赖收集 派发更新 - iCheng" />
+  
+  <meta property="og:type" content="article" />
+  
+  <meta property="og:url" content="http://example.com/2023/07/11/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E4%BE%9D%E8%B5%96%E6%94%B6%E9%9B%86%20%E6%B4%BE%E5%8F%91%E6%9B%B4%E6%96%B0/index.html" />
+  
+  <meta property="og:image" content="/favicon.png" />
+  
+  <meta property="og:article:published_time" content="2023-07-11T02:33:53.000Z" />
+  
+  <meta property="og:article:author" content="Duan WeiCheng" />
+  
+  
+
+  
+<link rel="stylesheet" href="/css/var.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/typography.css">
+
+  
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+  
+<link rel="stylesheet" href="/css/components.css">
+
+  
+<link rel="stylesheet" href="/css/nav.css">
+
+  
+<link rel="stylesheet" href="/css/paginator.css">
+
+  
+<link rel="stylesheet" href="/css/footer.css">
+
+  
+<link rel="stylesheet" href="/css/post-list.css">
+
+  
+  
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+  
+  
+  
+<link rel="stylesheet" href="/css/toc.css">
+
+  
+  
+    
+<link rel="stylesheet" href="/css/giscus.css">
+
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/post.css">
+
+  
+  
+  
+  
+  
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+        <div class="categories text-uppercase">
+        
+            <a href="/categories/源码解析/">源码解析</a>
+        
+        </div>
+        
+
+        
+        <div class="date" id="date">
+            <span>July</span>
+            <span>11,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">Vue2源码：依赖收集 派发更新</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <h1 id="1-What"><a href="#1-What" class="headerlink" title="1 What"></a>1 What</h1><p>程序在运行时，状态会不断发生变化。当状态发生变化后，需要重新渲染，得到最新的视图。</p>
+<p>正是<strong>响应式</strong>赋予了<strong>状态变更 - 重新渲染</strong>的能力</p>
+<p>通常来说，响应式的核心组成部分为：<strong>数据劫持、依赖收集、派发更新</strong></p>
+<p>之前一篇文章已经叙述过数据劫持的内容</p>
+<blockquote>
+<p>数据劫持源码分析：<a target="_blank" rel="noopener" href="https://icheng.github.io/2023/07/10/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%8A%AB%E6%8C%81%E5%8E%9F%E7%90%86/">https://icheng.github.io/2023/07/10/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%8A%AB%E6%8C%81%E5%8E%9F%E7%90%86/</a></p>
+</blockquote>
+<p>下面来分析一下依赖收集、派发更新的源码原理</p>
+<h1 id="2-思考-3-个问题"><a href="#2-思考-3-个问题" class="headerlink" title="2 思考 3 个问题"></a>2 思考 3 个问题</h1><p>我们知道了 Vue2 底层是通过 <code>Object.defineProperty</code> 来实现数据响应式的，但是单有这个还不够，因为数据可能没有在模板中使用</p>
+<p>所以 Vue2，通过<strong>依赖收集</strong>来判断哪些用到的数据的变更需要触发视图更新，再通过<strong>派发更新</strong>通知视图进行更新渲染</p>
+<p><strong>那么我们先来考虑 3 个问题：</strong></p>
+<ul>
+<li>依赖是谁？换句话说，属性发生变化后，通知到谁？（Watcher）</li>
+<li>依赖收集到哪里？每一个数据的依赖都需要集中管理（Dep）</li>
+<li>在哪里做依赖收集？（Observe）</li>
+</ul>
+<h2 id="3-依赖收集中的各个类"><a href="#3-依赖收集中的各个类" class="headerlink" title="3 依赖收集中的各个类"></a>3 依赖收集中的各个类</h2><p>先来看一张图</p>
+<div align="center">
+    <img src="/2023/07/11/Vue2源码：依赖收集 派发更新/依赖收集1.jpg" style="height: 450px; width: 900px;">
+</div>
+
+
+
+<p>数据是<strong>被观察者</strong>，将数据标记为已观测数据后，数据就会有一个 Dep 实例</p>
+<p>触发数据的 getter 时，就会进行依赖收集，将依赖集中管理</p>
+<p>触发数据的 setter 时，就会进行派发更新，会通知 <strong>观察者Watcher</strong> 进行渲染更新</p>
+<p>带着这张图，我们来分析一下过程中的 3 个类： Watcher、Dep、Observe</p>
+<h2 id="3-1-Dep"><a href="#3-1-Dep" class="headerlink" title="3.1 Dep"></a>3.1 Dep</h2><blockquote>
+<p>源码位置：vue-main\src\core\observer\dep.ts</p>
+</blockquote>
+<p>每一个被观测的数据都会有一个 <code>Dep</code> 类实例，且 Dep 拥有一个唯一 id</p>
+<h4 id="subs-队列"><a href="#subs-队列" class="headerlink" title="subs 队列"></a>subs 队列</h4><p>Dep 内部维护一个 <strong>subs</strong> 队列</p>
+<p>subs就是subscribers的意思，保存着依赖本数据的<strong>观察者 Watcher</strong></p>
+<h4 id="Dep-target"><a href="#Dep-target" class="headerlink" title="Dep.target"></a>Dep.target</h4><p>全局变量，指向目前正在使用的 watcher</p>
+<ul>
+<li><strong>targetStack</strong>：栈结构，用来保存Watcher</li>
+<li><strong>pushTarget</strong>：往 targetStack 中 push 当前的 Watcher（排在前一个Watcher的后面），并把  Dep.target  赋值给当前 Watcher</li>
+<li><strong>popTarget</strong>：先把 targetStack 最后一个元素弹出(.pop)，再把 Dep.target 赋值给最后一个Watcher(也就是还原了前一个Watcher)</li>
+<li>通过上述实现，vue 保证了 全局唯一的 Watcher，准确赋值在 Dep.target 中</li>
+</ul>
+<h4 id="dep-depend"><a href="#dep-depend" class="headerlink" title="dep.depend()"></a>dep.depend()</h4><p>Dep 类中有个一个 depend() 方法，进行<strong>依赖收集</strong></p>
+<p>但他不会直接将 watcher 存放在 subs 中</p>
+<p>而是调用 <code>Dep.target.addDep()</code> ：</p>
+<p>通知 watcher 先存放 dep （去重）</p>
+<p>再调用 <code>dep.addSub()</code> 让 dep 存储该 watcher</p>
+<p><strong>这样便完成了双向存储，并且不会重复存储</strong></p>
+<div align="center">
+    <img src="/2023/07/11/Vue2源码：依赖收集 派发更新/dep1.png" style="height: 230px; width: 300px;">
+</div>
+
+
+
+<h4 id="dep-notify"><a href="#dep-notify" class="headerlink" title="dep.notify()"></a>dep.notify()</h4><p>触发数据劫持的 setter 时会执行这个 dep.notify() </p>
+<p>会遍历 subs</p>
+<p>通知 watcher 执行  <code>.update()</code> 方法 去<strong>派发更新</strong></p>
+<h2 id="3-2-Watcher"><a href="#3-2-Watcher" class="headerlink" title="3.2 Watcher"></a>3.2 Watcher</h2><p>观察者，拥有一个唯一id</p>
+<p>同时要注意的是，watcher有三种：render watcher、 computed watcher (lazy为true)、user watcher (user为true)</p>
+<h4 id="addDep"><a href="#addDep" class="headerlink" title="addDep()"></a>addDep()</h4><p>这个方法上面说过了，用来双向存储</p>
+<h4 id="update"><a href="#update" class="headerlink" title="update()"></a>update()</h4><p>派发更新</p>
+<p>这里会进行判断：</p>
+<p>如果 lazy 为 true，说明是计算属性，则将 dirty 设置为 true</p>
+<p>或者就进行执行 <code>queueWatcher</code> 进行异步更新</p>
+<blockquote>
+<p>异步更新文章：</p>
+<p><a target="_blank" rel="noopener" href="https://icheng.github.io/2023/07/08/Vue2%E6%BA%90%E7%A0%81%EF%BC%9AnextTick%E5%8E%9F%E7%90%86/">https://icheng.github.io/2023/07/08/Vue2%E6%BA%90%E7%A0%81%EF%BC%9AnextTick%E5%8E%9F%E7%90%86/</a></p>
+</blockquote>
+<h4 id="get"><a href="#get" class="headerlink" title="get()"></a>get()</h4><p>update() 后，进入异步更新，异步更新的 flushSchedulerQueue() 还是会执行这个get()方法</p>
+<ul>
+<li>调用dep的pushTarget</li>
+<li>调用回调函数（如渲染更新方法 <code>vm._update(vm._render())</code> ）</li>
+<li>popTarget</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">get</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title function_">pushTarget</span>(<span class="variable language_">this</span>)</span><br><span class="line">    <span class="keyword">let</span> value</span><br><span class="line">    <span class="keyword">const</span> vm = <span class="variable language_">this</span>.<span class="property">vm</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      value = <span class="variable language_">this</span>.<span class="property">getter</span>.<span class="title function_">call</span>(vm, vm)  <span class="comment">// 调用函数</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="attr">e</span>: any) &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">user</span>) &#123;</span><br><span class="line">        <span class="title function_">handleError</span>(e, vm, <span class="string">`getter for watcher &quot;<span class="subst">$&#123;<span class="variable language_">this</span>.expression&#125;</span>&quot;`</span>)</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> e</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">// &quot;touch&quot; every property so they are all tracked as</span></span><br><span class="line">      <span class="comment">// dependencies for deep watching</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">deep</span>) &#123;</span><br><span class="line">        <span class="title function_">traverse</span>(value)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="title function_">popTarget</span>()</span><br><span class="line">      <span class="variable language_">this</span>.<span class="title function_">cleanupDeps</span>()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> value</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="3-3-Observe-依赖收集的入口"><a href="#3-3-Observe-依赖收集的入口" class="headerlink" title="3.3 Observe 依赖收集的入口"></a>3.3 Observe 依赖收集的入口</h2><p>之前的文章讲过，Observer 会将数据标记<strong>已观测数据</strong></p>
+<p>并通过 Object.defineProperty 的 get&#x2F;set 劫持数据的读取和修改</p>
+<p>劫持数据 <code>getter</code> 时进行<strong>依赖收集</strong>，如果 <code>Dep.target</code> 存在，就调用 <code>dep.depend()</code></p>
+<p>劫持数据 <code>setter</code> 时<strong>派发更新</strong>，调用 <code>dep.notify()</code></p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Object</span>.<span class="title function_">defineProperty</span>(obj, key, &#123;</span><br><span class="line">    <span class="attr">enumerable</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">configurable</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">get</span>: <span class="keyword">function</span> <span class="title function_">reactiveGetter</span>(<span class="params"></span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> value = getter ? getter.<span class="title function_">call</span>(obj) : val</span><br><span class="line">      <span class="keyword">if</span> (<span class="title class_">Dep</span>.<span class="property">target</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (__DEV__) &#123;</span><br><span class="line">          dep.<span class="title function_">depend</span>(&#123;</span><br><span class="line">            <span class="attr">target</span>: obj,</span><br><span class="line">            <span class="attr">type</span>: <span class="title class_">TrackOpTypes</span>.<span class="property">GET</span>,</span><br><span class="line">            key</span><br><span class="line">          &#125;)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          dep.<span class="title function_">depend</span>()</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (childOb) &#123;</span><br><span class="line">          childOb.<span class="property">dep</span>.<span class="title function_">depend</span>()</span><br><span class="line">          <span class="keyword">if</span> (<span class="title function_">isArray</span>(value)) &#123;</span><br><span class="line">            <span class="title function_">dependArray</span>(value)</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> <span class="title function_">isRef</span>(value) &amp;&amp; !shallow ? value.<span class="property">value</span> : value</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">set</span>: <span class="keyword">function</span> <span class="title function_">reactiveSetter</span>(<span class="params">newVal</span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> value = getter ? getter.<span class="title function_">call</span>(obj) : val</span><br><span class="line">      <span class="keyword">if</span> (!<span class="title function_">hasChanged</span>(value, newVal)) &#123;</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (__DEV__ &amp;&amp; customSetter) &#123;</span><br><span class="line">        <span class="title function_">customSetter</span>()</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (setter) &#123;</span><br><span class="line">        setter.<span class="title function_">call</span>(obj, newVal)</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (getter) &#123;</span><br><span class="line">        <span class="comment">// #7981: for accessor properties without setter</span></span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!shallow &amp;&amp; <span class="title function_">isRef</span>(value) &amp;&amp; !<span class="title function_">isRef</span>(newVal)) &#123;</span><br><span class="line">        value.<span class="property">value</span> = newVal</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        val = newVal</span><br><span class="line">      &#125;</span><br><span class="line">      childOb = !shallow &amp;&amp; <span class="title function_">observe</span>(newVal, <span class="literal">false</span>, mock)</span><br><span class="line">      <span class="keyword">if</span> (__DEV__) &#123;</span><br><span class="line">        dep.<span class="title function_">notify</span>(&#123;</span><br><span class="line">          <span class="attr">type</span>: <span class="title class_">TriggerOpTypes</span>.<span class="property">SET</span>,</span><br><span class="line">          <span class="attr">target</span>: obj,</span><br><span class="line">          key,</span><br><span class="line">          <span class="attr">newValue</span>: newVal,</span><br><span class="line">          <span class="attr">oldValue</span>: value</span><br><span class="line">        &#125;)</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        dep.<span class="title function_">notify</span>()</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<p>看到这里，是否细节太多绕晕了？</p>
+<p><strong>来个初始化时的整体流程，从宏观角度再过一遍</strong></p>
+<h1 id="3-初始化流程"><a href="#3-初始化流程" class="headerlink" title="3 初始化流程"></a>3 初始化流程</h1><p>比如我们在模板中使用 <code>&#123;&#123;name&#125;&#125;</code></p>
+<p>组件挂载过程中，进行 new Watcher，创建一个渲染watcher</p>
+<p>并传入参数：渲染更新方法 <code>vm._update(vm._render())</code></p>
+<blockquote>
+<p>源码位置：vue-main\src\core\instance\lifecycle.ts  （mountComponent）</p>
+</blockquote>
+<p>因为不是 computed  watcher ，会默认执行 get() 方法：</p>
+<ul>
+<li><p>pushTarget() ：当前 Dep.target 指向这个渲染watcher</p>
+</li>
+<li><p>调用回调函数，当前函数是渲染更新方法 <code>vm._update(vm._render())</code></p>
+<p>首先 <code>vm._render()</code> 会去实例中取新值，这个过程则调用 <code>Object.defineProperty</code> 的 get，当前 <code>Dep.target</code> 是存在的，会执行 <code>dep.depend()</code> ，进行<strong>依赖收集</strong></p>
+<p>那么 dep 和 watcher 的双向存储就完成了</p>
+<p>然后 <code>vm._update()</code> 会将虚拟DOM转为真实DOM，涉及diff算法等等，总之渲染完成</p>
+</li>
+<li><p>popTarget()： Dep.target 不需要指向这个渲染watcher了</p>
+</li>
+<li><p>同时会存储目前的属性值，存储在value，方便后面判断值是否修改了</p>
+</li>
+</ul>
+<p>看看源码：</p>
+<blockquote>
+<p>源码位置：vue-main\src\core\observer\watcher.ts</p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">this</span>.<span class="property">value</span> = <span class="variable language_">this</span>.<span class="property">lazy</span> ? <span class="literal">undefined</span> : <span class="variable language_">this</span>.<span class="title function_">get</span>()</span><br></pre></td></tr></table></figure>
+
+<div align="center">
+    <img src="/2023/07/11/Vue2源码：依赖收集 派发更新/初始化流程.png" style="height: 230px; width: 580px;">
+</div>
+
+<h1 id="4-修改值流程"><a href="#4-修改值流程" class="headerlink" title="4 修改值流程"></a>4 修改值流程</h1><p>那么修改值的过程，主要就是多了劫持getter和异步更新</p>
+<div align="center">
+    <img src="/2023/07/11/Vue2源码：依赖收集 派发更新/修改值流程.png" style="height: 530px; width: 880px;">
+</div>
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/07/10/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%8A%AB%E6%8C%81%E5%8E%9F%E7%90%86/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">Vue2源码：数据劫持原理</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+    <div class="inner">
+        <div class="links">
+            
+            <div class="group">
+                <h2 class="title">Blog</h2>
+                
+                <a href="/" class="item">Blog</a>
+                
+                <a href="/archives" class="item">Archives</a>
+                
+                <a href="/tags" class="item">Tags</a>
+                
+                <a href="/categories" class="item">Categories</a>
+                
+                <a href="/search" class="item">Search</a>
+                
+                <a href="/friends" class="item">Friends</a>
+                
+                <a href="/about" class="item">About</a>
+                
+            </div>
+            
+            <div class="group">
+                <h2 class="title">Projects</h2>
+                
+            </div>
+            
+            <div class="group">
+                <h2 class="title">Me</h2>
+                
+                <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">GitHub</a>
+                
+                <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">CSDN</a>
+                
+            </div>
+            
+        </div>
+        <span>&copy; 2023 Duan WeiCheng<br>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> </span>
+        
+        
+            <br>
+            <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+                <label>
+                    <input type="radio" value="light">
+                    <span>Light</span>
+                </label>
+                <label>
+                    <input type="radio" value="dark">
+                    <span>Dark</span>
+                </label>
+                <label>
+                    <input type="radio" value="auto">
+                    <span>Auto</span>
+                </label>
+            </div>
+        
+    </div>
+</footer>
+
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>

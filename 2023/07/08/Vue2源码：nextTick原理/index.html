@@ -191,6 +191,16 @@
 
 
 <h2 id="2-3-flushSchedulerQueue-函数做什么"><a href="#2-3-flushSchedulerQueue-函数做什么" class="headerlink" title="2.3 flushSchedulerQueue() 函数做什么"></a>2.3 flushSchedulerQueue() 函数做什么</h2><p><code>flushSchedulerQueue()</code> 函数遍历 queue ，通知对应的 watcher 去渲染更新</p>
+<p>首先调用 watcher.run()  </p>
+<p>run()内部则 watcher.get()</p>
+<p>会调用 渲染更新方法</p>
+<blockquote>
+<p>这里涉及的 watcher 在后面的文章会提到</p>
+</blockquote>
+<div align="center">
+    <img src="/2023/07/08/Vue2源码：nextTick原理/流程.png" style="height: 270px; width: 700px;">
+</div>
+
 <h2 id="2-4-nextTick-函数"><a href="#2-4-nextTick-函数" class="headerlink" title="2.4 nextTick() 函数"></a>2.4 nextTick() 函数</h2><blockquote>
 <p>源码位置：vue-main\src\core\util\next-tick.ts</p>
 </blockquote>
