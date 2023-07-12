@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  
+  <title>Vue2源码：diff 算法原理 - iCheng</title>
+  
+    <link rel="shortcut icon" href="/theme-img/logo.png">
+  
+  
+    <link rel='manifest' href='/manifest.json'>
+  
+
+  
+  
+  
+  <meta property="og:title" content="Vue2源码：diff 算法原理 - iCheng" />
+  
+  <meta property="og:type" content="article" />
+  
+  <meta property="og:url" content="http://example.com/2023/07/12/Vue2%E6%BA%90%E7%A0%81%EF%BC%9Adiff%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86/index.html" />
+  
+  <meta property="og:image" content="/favicon.png" />
+  
+  <meta property="og:article:published_time" content="2023-07-12T12:44:47.000Z" />
+  
+  <meta property="og:article:author" content="Duan WeiCheng" />
+  
+  
+
+  
+<link rel="stylesheet" href="/css/var.css">
+
+  
+<link rel="stylesheet" href="/css/main.css">
+
+  
+<link rel="stylesheet" href="/css/typography.css">
+
+  
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+  
+<link rel="stylesheet" href="/css/components.css">
+
+  
+<link rel="stylesheet" href="/css/nav.css">
+
+  
+<link rel="stylesheet" href="/css/paginator.css">
+
+  
+<link rel="stylesheet" href="/css/footer.css">
+
+  
+<link rel="stylesheet" href="/css/post-list.css">
+
+  
+  
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+  
+  
+  
+<link rel="stylesheet" href="/css/toc.css">
+
+  
+  
+    
+<link rel="stylesheet" href="/css/giscus.css">
+
+  
+  
+  
+  
+<link rel="stylesheet" href="/css/post.css">
+
+  
+  
+  
+  
+  
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+        <div class="categories text-uppercase">
+        
+            <a href="/categories/源码解析/">源码解析</a>
+        
+        </div>
+        
+
+        
+        <div class="date" id="date">
+            <span>July</span>
+            <span>12,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">Vue2源码：diff 算法原理</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <h1 id="1-是什么"><a href="#1-是什么" class="headerlink" title="1 是什么"></a>1 是什么</h1><p>如果我现在修改了模板中的一个属性</p>
+<p>那么 Vue 怎么更新渲染处理比较好呢？</p>
+<ul>
+<li>把旧的 DOM 全部删除，然后渲染一个新的 DOM 替换上去？</li>
+</ul>
+<p>这样显然成本比较高</p>
+<p>为了节省开销，Vue 中会<strong>将新老虚拟DOM进行对比，尽量复用旧 DOM</strong></p>
+<p>这个过程就是 diff 算法</p>
+<p>下面我们按照这个思路图，进行讲解</p>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/流程图.png" style="height: 450px; width: 900px;">
+</div>
+
+<h1 id="2-patch"><a href="#2-patch" class="headerlink" title="2 patch()"></a>2 patch()</h1><blockquote>
+<p>源码位置：vue-main\src\core\vdom\patch.ts</p>
+</blockquote>
+<p>当数据更新，数据劫持，触发setter，派发更新，然后会执行 <strong>patch()</strong> 方法，会传入参数：<strong>老的虚拟节点、新的虚拟节点</strong></p>
+<p>首先，这里面会执行 <strong>sameVnode()</strong> ，判断当前两个节点<strong>是否是同类标签</strong></p>
+<ul>
+<li>不是同类标签：那就直接替换就完事了</li>
+<li>是同类标签：就要进行进一步比较，看看他俩是不是完全一样的，调用 <strong>patchVnode()</strong> 方法</li>
+</ul>
+<h2 id="2-1-sameVnode-是否是同类标签"><a href="#2-1-sameVnode-是否是同类标签" class="headerlink" title="2.1 sameVnode() 是否是同类标签"></a>2.1 sameVnode() 是否是同类标签</h2><p> sameVnode() 的作用是：通过对比 key、tag、inputType 判断当前两个节点是否是同类标签</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">sameVnode</span>(<span class="params">a, b</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    a.<span class="property">key</span> === b.<span class="property">key</span> &amp;&amp;</span><br><span class="line">    a.<span class="property">asyncFactory</span> === b.<span class="property">asyncFactory</span> &amp;&amp;</span><br><span class="line">    ((a.<span class="property">tag</span> === b.<span class="property">tag</span> &amp;&amp;</span><br><span class="line">      a.<span class="property">isComment</span> === b.<span class="property">isComment</span> &amp;&amp;</span><br><span class="line">      <span class="title function_">isDef</span>(a.<span class="property">data</span>) === <span class="title function_">isDef</span>(b.<span class="property">data</span>) &amp;&amp;</span><br><span class="line">      <span class="title function_">sameInputType</span>(a, b)) ||</span><br><span class="line">      (<span class="title function_">isTrue</span>(a.<span class="property">isAsyncPlaceholder</span>) &amp;&amp; <span class="title function_">isUndef</span>(b.<span class="property">asyncFactory</span>.<span class="property">error</span>)))</span><br><span class="line">  )</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="3-patchVnode"><a href="#3-patchVnode" class="headerlink" title="3 patchVnode()"></a>3 patchVnode()</h1><ul>
+<li>文本不同则覆盖文本</li>
+<li>旧虚拟 DOM 多余子节点，则删除；</li>
+<li>旧虚拟 DOM 少子节点，则新增</li>
+<li>都有子节点，进行 updateChildren() 比较两个人的子节点</li>
+</ul>
+<h1 id="4-updateChildren-diff-核心方法"><a href="#4-updateChildren-diff-核心方法" class="headerlink" title="4 updateChildren() - diff 核心方法"></a>4 updateChildren() - diff 核心方法</h1><p><code>updateChildren</code> 是核心，采用双指针的方式，比较<strong>旧虚拟 DOM</strong> 和<strong>新虚拟 DOM</strong> 的<strong>子节点</strong>，尽量复用旧虚拟 DOM </p>
+<p><strong>while 循环：</strong></p>
+<p>因为循环过程中有<strong>两个指针</strong>指向新、旧DOM，因此while循环条件是当前遍历的index没有越界</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (oldStartIdx &lt;= oldEndIdx &amp;&amp; newStartIdx &lt;= newEndIdx)</span><br></pre></td></tr></table></figure>
+
+<p><strong>头头比较：</strong></p>
+<ul>
+<li>指针指向：<strong>oldStartVnode, newStartVnode</strong></li>
+<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
+<li>调用 patchVnode() 递归比较</li>
+<li>index++</li>
+</ul>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/头头比较.png" style="height: 550px; width: 600px;">
+</div>
+
+<p><strong>尾尾比较：</strong></p>
+<ul>
+<li>指针指向：<strong>oldEndVnode, newEndVnode</strong></li>
+<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
+<li>调用 patchVnode() 递归比较</li>
+<li>index - -</li>
+</ul>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/尾尾比较.png" style="height: 550px; width: 760px;">
+</div>
+
+<p><strong>头尾比较：</strong></p>
+<ul>
+<li>指针指向：<strong>oldStartVnode, newEndVnode</strong></li>
+<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
+<li>调用 patchVnode() 递归比较</li>
+<li>旧节点 index++   新节点 index–</li>
+</ul>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/头尾比较.png" style="height: 350px; width: 760px;">
+</div>
+
+<p><strong>尾头比较：</strong></p>
+<ul>
+<li>指针指向：<strong>oldEndVnode, newStartVnode</strong></li>
+<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
+<li>调用 patchVnode() 递归比较</li>
+<li>旧节点 index–   新节点 index++</li>
+</ul>
+<p><strong>乱序比较：</strong></p>
+<p>根据老的索引和key做一个映射关系 </p>
+<p>根据新虚拟节点的去寻找</p>
+<p>找到则移动到前面（移动过的标识为undefined）</p>
+<p>找不到则添加</p>
+<p>最后多余的就删除</p>
+<p><strong>跳出while循环</strong></p>
+<p>如果旧节点没有，新节点有</p>
+<p>就要把多余的节点就插入到老的</p>
+<p>那么这里有两种情况：</p>
+<ul>
+<li>头头比较，可以直接把<strong>多余的节点插入 old节点 后面</strong>   </li>
+<li>尾尾比较：需要把<strong>多余的节点插入 old节点 前面</strong></li>
+</ul>
+<p>一个要插入前面、一个要插入后面，所以 Vue 中使用<strong>获取下一个元素方法</strong>来解决：</p>
+<ul>
+<li>拿到这个多余节点的<strong>下一个元素</strong>，可能为空(头头比较情况)，可能存在(尾尾比较情况)</li>
+<li>执行 el.insertBefore(真实节点, 下一个元素)  <ul>
+<li>如果下一个元素为空：就是<strong>头头比较</strong>的情况，则相当于appendChild() ，在<strong>老节点后面追加</strong>多余的节点</li>
+<li>如果不为空：就是<strong>尾尾比较</strong>情况，在老节点中找到<strong>此下一个元素</strong>，要到会把多余节点<strong>插入到下一个元素的前面</strong></li>
+</ul>
+</li>
+</ul>
+<p>至此 diff 算法完成</p>
+<p><strong>不过这里还涉及到一个面试题</strong></p>
+<h1 id="5-面试题"><a href="#5-面试题" class="headerlink" title="5 面试题"></a>5 面试题</h1><h3 id="5-1-面试题：为什么v-for循环时，key不能使用索引？"><a href="#5-1-面试题：为什么v-for循环时，key不能使用索引？" class="headerlink" title="5.1 面试题：为什么v-for循环时，key不能使用索引？"></a>5.1 面试题：为什么v-for循环时，key不能使用索引？</h3><p>如下图，如果当前有一个数组存储：[‘苹果’, ‘梨’, ‘香蕉’]</p>
+<p>使用 v-for 循环，渲染到页面上</p>
+<p>并将苹果置为<strong>被勾选状态</strong></p>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/面试题1.png" style="height: 250px; width: 500px;">
+</div>
+
+<p><strong>如果现在使用 索引 作为 key</strong></p>
+<p>用户向数组中 unshift 一个火龙果</p>
+<p>那么界面，就变成了火龙果被勾选的状态</p>
+<p>这是为什么？？</p>
+<h3 id="5-2-原因"><a href="#5-2-原因" class="headerlink" title="5.2 原因"></a>5.2 原因</h3><p>因为修改数据后，虚拟DOM转换为真实DOM过程的 diff 算法</p>
+<p>sameVnode() 采用 key、tag、inputType 判断是否是同类标签</p>
+<p>之前苹果的索引为0</p>
+<p>插入火龙果后，火龙果的索引依然是0</p>
+<p>此时 sameVnode() 判断两个节点是同类标签，进一步比较 patchVnode()，<strong>仅使用新文本替换旧文本</strong></p>
+<p>勾选状态还在</p>
+<p>所以火龙果就被勾选了</p>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/面试题2.png" style="height: 750px; width: 760px;">
+</div>
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/07/11/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E4%BE%9D%E8%B5%96%E6%94%B6%E9%9B%86%20%E6%B4%BE%E5%8F%91%E6%9B%B4%E6%96%B0/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">Vue2源码：依赖收集 派发更新</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+    <div class="inner">
+        <div class="links">
+            
+            <div class="group">
+                <h2 class="title">Blog</h2>
+                
+                <a href="/" class="item">Blog</a>
+                
+                <a href="/archives" class="item">Archives</a>
+                
+                <a href="/tags" class="item">Tags</a>
+                
+                <a href="/categories" class="item">Categories</a>
+                
+                <a href="/search" class="item">Search</a>
+                
+                <a href="/friends" class="item">Friends</a>
+                
+                <a href="/about" class="item">About</a>
+                
+            </div>
+            
+            <div class="group">
+                <h2 class="title">Projects</h2>
+                
+            </div>
+            
+            <div class="group">
+                <h2 class="title">Me</h2>
+                
+                <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">GitHub</a>
+                
+                <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">CSDN</a>
+                
+            </div>
+            
+        </div>
+        <span>&copy; 2023 Duan WeiCheng<br>Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> </span>
+        
+        
+            <br>
+            <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+                <label>
+                    <input type="radio" value="light">
+                    <span>Light</span>
+                </label>
+                <label>
+                    <input type="radio" value="dark">
+                    <span>Dark</span>
+                </label>
+                <label>
+                    <input type="radio" value="auto">
+                    <span>Auto</span>
+                </label>
+            </div>
+        
+    </div>
+</footer>
+
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>
