@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    
+      <title>
+        
+          创建一个力导向气泡图 - 
+              iCheng
+      </title>
+      
+        <link rel="shortcut icon" href="/theme-img/logo.png">
+          
+            
+              <link rel='manifest' href='/manifest.json'>
+              
+
+                
+                  
+                    
+                      <meta property="og:title" content="创建一个力导向气泡图 - iCheng" />
+                      
+                      <meta property="og:type" content="article" />
+                      
+                      <meta property="og:url" content="http://example.com/2023/07/14/%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8A%9B%E5%AF%BC%E5%90%91%E6%B0%94%E6%B3%A1%E5%9B%BE/index.html" />
+                      
+                      <meta property="og:image" content="/favicon.png" />
+                      
+                      <meta property="og:article:published_time" content="2023-07-14T10:15:34.000Z" />
+                      
+                      <meta property="og:article:author" content="Duan WeiCheng" />
+                      
+                        
+
+                          
+<link rel="stylesheet" href="/css/var.css">
+
+                            
+<link rel="stylesheet" href="/css/main.css">
+
+                              
+<link rel="stylesheet" href="/css/typography.css">
+
+                                
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+                                  
+<link rel="stylesheet" href="/css/components.css">
+
+                                    
+<link rel="stylesheet" href="/css/nav.css">
+
+                                      
+<link rel="stylesheet" href="/css/paginator.css">
+
+                                        
+<link rel="stylesheet" href="/css/footer.css">
+
+                                          
+<link rel="stylesheet" href="/css/post-list.css">
+
+                                            
+                                              
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+                                                
+                                                  
+                                                    
+<link rel="stylesheet" href="/css/toc.css">
+
+                                                      
+                                                        
+                                                          
+<link rel="stylesheet" href="/css/giscus.css">
+
+                                                            
+                                                              
+                                                                    
+                                                                      
+<link rel="stylesheet" href="/css/post.css">
+
+                                                                        
+                                                                          
+                                                                                
+                                                                                      
+                                                                                            
+
+                                                                                                  
+                                                                                                      <meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+        <div class="categories text-uppercase">
+        
+            <a href="/categories/数据可视化/">数据可视化</a>
+        
+        </div>
+        
+
+        
+        <div class="date" id="date">
+            <span>July</span>
+            <span>14,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">创建一个力导向气泡图</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <h1 id="1-先上效果"><a href="#1-先上效果" class="headerlink" title="1 先上效果"></a>1 先上效果</h1><p><a target="_blank" rel="noopener" href="https://postimg.cc/7J2tS4Z1"><img src="https://i.postimg.cc/KjqXSvXW/bubb.gif" alt="bubb.gif"></a></p>
+<p>可以看到效果涉及：</p>
+<ul>
+<li>节点样式</li>
+<li>力作用聚拢</li>
+<li>节点交互事件</li>
+</ul>
+<p>下面来看看是怎样实现的</p>
+<h1 id="2-数据格式"><a href="#2-数据格式" class="headerlink" title="2 数据格式"></a>2 数据格式</h1><h3 id="nodes-节点"><a href="#nodes-节点" class="headerlink" title="nodes 节点"></a>nodes 节点</h3><table>
+<thead>
+<tr>
+<th>key</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>id</td>
+<td>唯一id</td>
+</tr>
+<tr>
+<td>label</td>
+<td>标签文本</td>
+</tr>
+<tr>
+<td>style</td>
+<td>节点样式，如：fill(填充色)、stroke(边缘颜色)、shadowBlur、shadowOffsetX、shadowOffsetY、shadowColor….</td>
+</tr>
+<tr>
+<td>description</td>
+<td>描述文本（放大后显示）</td>
+</tr>
+<tr>
+<td>x</td>
+<td>节点初始位置</td>
+</tr>
+<tr>
+<td>y</td>
+<td>节点初始位置</td>
+</tr>
+<tr>
+<td>size</td>
+<td>节点大小</td>
+</tr>
+</tbody></table>
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> data = &#123;</span><br><span class="line">        <span class="attr">nodes</span>: [</span><br><span class="line">          &#123;</span><br><span class="line">            <span class="attr">id</span>: <span class="string">&#x27;0&#x27;</span>,</span><br><span class="line">            <span class="attr">label</span>: <span class="string">&#x27;iCheng&#x27;</span>,</span><br><span class="line">            <span class="attr">style</span>: &#123; <span class="attr">fill</span>: <span class="string">&#x27;l(0) 0:#ffffff 0.5:#8FE9FF 1:#87EAEF&#x27;</span>, <span class="attr">stroke</span>: <span class="string">&#x27;&#x27;</span>, <span class="attr">shadowBlur</span>: <span class="number">60</span>, <span class="attr">shadowOffsetX</span>: <span class="number">10</span>, <span class="attr">shadowOffsetY</span>: <span class="number">10</span>, <span class="attr">shadowColor</span>: <span class="string">&#x27;#ADD8E6&#x27;</span> &#125;,</span><br><span class="line">            <span class="attr">description</span>: <span class="string">&#x27;See the latest updates to the MDN reference pages about JavaScript regular expressions&#x27;</span>,</span><br><span class="line">            <span class="attr">x</span>: <span class="number">624.0361181340486</span>,</span><br><span class="line">            <span class="attr">y</span>: <span class="number">208.12272169694995</span>,</span><br><span class="line">            <span class="attr">size</span>: <span class="number">57</span></span><br><span class="line">          &#125;,</span><br><span class="line">          &#123;</span><br><span class="line">            <span class="attr">id</span>: <span class="string">&#x27;1&#x27;</span>,</span><br><span class="line">            <span class="attr">label</span>: <span class="string">&#x27;analyse&#x27;</span>,</span><br><span class="line">            <span class="attr">style</span>: &#123; <span class="attr">fill</span>: <span class="string">&#x27;l(0) 0:#FFD3C9 0.5:	#FFD3C9 1:#ffffff&#x27;</span>, <span class="attr">stroke</span>: <span class="string">&#x27;&#x27;</span>, <span class="attr">shadowBlur</span>: <span class="number">60</span>, <span class="attr">shadowOffsetX</span>: <span class="number">10</span>, <span class="attr">shadowOffsetY</span>: <span class="number">10</span>, <span class="attr">shadowColor</span>: <span class="string">&#x27;#E6E6FA&#x27;</span> &#125;,</span><br><span class="line">            <span class="attr">description</span>: <span class="string">&#x27;Learn what HTML landmark roles are, how they improve accessibility&#x27;</span>,</span><br><span class="line">            <span class="attr">x</span>: <span class="number">538.8142691877796</span>,</span><br><span class="line">            <span class="attr">y</span>: <span class="number">236.54991963171793</span>,</span><br><span class="line">            <span class="attr">size</span>: <span class="number">78</span></span><br><span class="line">          &#125;</span><br><span class="line">        ],</span><br><span class="line">    	<span class="comment">// 本示例不需要边</span></span><br><span class="line">        <span class="attr">edges</span>: [],</span><br><span class="line">      &#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="fill"><a href="#fill" class="headerlink" title="fill"></a>fill</h2><p>填充色使用渐变色</p>
+<p><strong>描边线性渐变</strong></p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 渐变角度为 <span class="number">0</span>，渐变的起始点颜色 <span class="selector-id">#ffffff</span>，中点的渐变色为 <span class="selector-id">#7ec2f3</span>，结束的渐变色为 <span class="selector-id">#1890ff</span></span><br><span class="line">&#x27;l(<span class="number">0</span>) <span class="number">0</span>:<span class="number">#ffffff</span> <span class="number">0.5</span>:<span class="number">#7ec2f3</span> <span class="number">1</span>:<span class="number">#1890ff</span><span class="string">&#x27;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>填充环形渐变</strong></p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 渐变起始圆的圆心坐标为被填充物体的包围盒中心点，半径为(包围盒对角线长度 / <span class="number">2</span>) 的 <span class="number">0.1</span> 倍，渐变的起始点颜色 <span class="selector-id">#ffffff</span>，中点的渐变色为 <span class="selector-id">#7ec2f3</span>，结束的渐变色为 <span class="selector-id">#1890ff</span></span><br><span class="line">&#x27;l(<span class="number">0</span>) <span class="number">0</span>:<span class="number">#ffffff</span> <span class="number">0.5</span>:<span class="number">#7ec2f3</span> <span class="number">1</span>:<span class="number">#1890ff</span><span class="string">&#x27;</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="3-图配置"><a href="#3-图配置" class="headerlink" title="3 图配置"></a>3 图配置</h1><p>基于G6</p>
+<p>Graph 是 G6 图表的载体，所有的 G6 节点实例操作以及事件，行为监听都在 Graph 实例上进行</p>
+<p>Graph 的初始化通过 new 进行实例化，实例化时需要传入需要的参数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> container = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;container&#x27;</span>);</span><br><span class="line"><span class="keyword">const</span> width = container.<span class="property">scrollWidth</span>;</span><br><span class="line"><span class="keyword">const</span> height = (container.<span class="property">scrollHeight</span> || <span class="number">1000</span>) - <span class="number">20</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> graph = <span class="keyword">new</span> <span class="variable constant_">G6</span>.<span class="title class_">Graph</span>(&#123;</span><br><span class="line">    <span class="attr">container</span>: <span class="string">&#x27;container&#x27;</span>,</span><br><span class="line">    width,</span><br><span class="line">    height,</span><br><span class="line">    <span class="comment">// 布局配置</span></span><br><span class="line">    <span class="attr">layout</span>: &#123;</span><br><span class="line">      <span class="attr">type</span>: <span class="string">&#x27;force&#x27;</span>, <span class="comment">// 力导向布局</span></span><br><span class="line">      <span class="attr">nodeStrength</span>: <span class="number">300</span>, <span class="comment">// 节点作用力，正数代表节点之间的引力作用，负数代表节点之间的斥力作用</span></span><br><span class="line">      <span class="attr">collideStrength</span>: <span class="number">0.7</span>, <span class="comment">// 防止重叠的力强度，范围 [0, 1]</span></span><br><span class="line">      <span class="attr">alphaDecay</span>: <span class="number">0.01</span>, <span class="comment">// 迭代阈值的衰减率</span></span><br><span class="line">      <span class="attr">preventOverlap</span>: <span class="literal">true</span>, <span class="comment">// 是否防止重叠 必须在数据中设置了 size 或在该布局中配置了与当前图节点大小相同的 nodeSize 值</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">modes</span>: &#123;</span><br><span class="line">      <span class="attr">default</span>: [<span class="string">&#x27;collapse-expand-combo&#x27;</span>], <span class="comment">// combo类型</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="comment">// 默认状态下节点的配置，比如 type, size, color。会被写入的 data 覆盖</span></span><br><span class="line">    <span class="attr">defaultNode</span>: &#123;</span><br><span class="line">      <span class="attr">type</span>: <span class="string">&#x27;bubble&#x27;</span>,</span><br><span class="line">      <span class="attr">size</span>: <span class="number">80</span>,</span><br><span class="line">      <span class="attr">labelCfg</span>: &#123;</span><br><span class="line">        <span class="attr">position</span>: <span class="string">&#x27;center&#x27;</span>,</span><br><span class="line">        <span class="attr">style</span>: &#123;</span><br><span class="line">          <span class="attr">fill</span>: <span class="string">&#x27;black&#x27;</span>,</span><br><span class="line">          <span class="attr">fontSize</span>: <span class="number">6</span>,</span><br><span class="line">          <span class="attr">fontStyle</span>: <span class="string">&#x27;bold&#x27;</span>,</span><br><span class="line">        &#125;,</span><br><span class="line">      &#125;,</span><br><span class="line">    &#125;,</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-1-Force-力导向"><a href="#3-1-Force-力导向" class="headerlink" title="3.1 Force 力导向"></a>3.1 Force 力导向</h2><p>Force 布局采用经典的力导向布局方法，将根据节点的信息，施加力使节点尽可能聚集</p>
+<p>更多配置可查看文档：<a target="_blank" rel="noopener" href="https://g6.antv.antgroup.com/api/graph-layout/combo-force">https://g6.antv.antgroup.com/api/graph-layout/combo-force</a></p>
+<h1 id="4-节点交互事件"><a href="#4-节点交互事件" class="headerlink" title="4 节点交互事件"></a>4 节点交互事件</h1><h2 id="4-1-节点开始被拖拽-node-dragstart"><a href="#4-1-节点开始被拖拽-node-dragstart" class="headerlink" title="4.1 节点开始被拖拽 node:dragstart"></a>4.1 节点开始被拖拽 node:dragstart</h2><p>当节点开始被拖拽的时候触发的事件</p>
+<p>节点开始被拖拽时，触发 <strong>refreshDragedNodePosition</strong> 方法</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">graph.<span class="title function_">on</span>(<span class="string">&#x27;node:dragstart&#x27;</span>, <span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">    graph.<span class="title function_">layout</span>(); <span class="comment">// graph.layout()重新以当前配置的属性进行一次布局</span></span><br><span class="line">    <span class="title function_">refreshDragedNodePosition</span>(e);</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-2-更新节点位置信息-refreshDragedNodePosition"><a href="#4-2-更新节点位置信息-refreshDragedNodePosition" class="headerlink" title="4.2 更新节点位置信息 refreshDragedNodePosition"></a>4.2 更新节点位置信息 refreshDragedNodePosition</h2><p>跟随拖动的位置，做相应数据处理</p>
+<p><strong>参数e：</strong>鼠标拖动信息（包含节点 x、y 坐标信息）</p>
+<p><strong>这个方法，会拿到节点当前x、y坐标值，赋予其 fx、fy 属性</strong></p>
+<h3 id="fx、fy"><a href="#fx、fy" class="headerlink" title="fx、fy"></a>fx、fy</h3><p>当你希望固定某个节点的位置，不受力的影响时，可以在该节点数据中配置 <strong>fx</strong> 与 <strong>fy</strong> 作为固定的坐标</p>
+<p>如果将 <strong>fx</strong> 与  <strong>fy</strong> 置为空，该节点就会继续受力的作用而聚拢</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">refreshDragedNodePosition</span> (e) &#123;</span><br><span class="line">  <span class="comment">// console.log(e)</span></span><br><span class="line">  <span class="keyword">const</span> model = e.<span class="property">item</span>.<span class="title function_">get</span>(<span class="string">&#x27;model&#x27;</span>);</span><br><span class="line">  model.<span class="property">fx</span> = e.<span class="property">x</span>;</span><br><span class="line">  model.<span class="property">fy</span> = e.<span class="property">y</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-3-拖动过程中-node-drag"><a href="#4-3-拖动过程中-node-drag" class="headerlink" title="4.3 拖动过程中 node:drag"></a>4.3 拖动过程中 node:drag</h2><p>当节点在拖动过程中时触发的事件</p>
+<p>触发 <strong>refreshDragedNodePosition</strong> 方法</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph.<span class="title function_">on</span>(<span class="string">&#x27;node:drag&#x27;</span>, <span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">    <span class="title function_">refreshDragedNodePosition</span>(e);</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-4-拖拽完成后-node-dragend"><a href="#4-4-拖拽完成后-node-dragend" class="headerlink" title="4.4 拖拽完成后 node:dragend"></a>4.4 拖拽完成后 node:dragend</h2><p><strong>当拖拽完成后触发的事件</strong></p>
+<p>将 <strong>fx</strong> 与  <strong>fy</strong> 置为空，该节点就会继续受力的作用而聚拢</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">graph.<span class="title function_">on</span>(<span class="string">&#x27;node:dragend&#x27;</span>, <span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">  e.<span class="property">item</span>.<span class="title function_">get</span>(<span class="string">&#x27;model&#x27;</span>).<span class="property">fx</span> = <span class="literal">null</span>;</span><br><span class="line">  e.<span class="property">item</span>.<span class="title function_">get</span>(<span class="string">&#x27;model&#x27;</span>).<span class="property">fy</span> = <span class="literal">null</span>;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-5-点击事件-node-click"><a href="#4-5-点击事件-node-click" class="headerlink" title="4.5 点击事件 node:click"></a>4.5 点击事件 node:click</h2><p>当节点被点击时触发的事件</p>
+<p>通过重置 <strong>size</strong> 属性，改变节点大小</p>
+<p>重置 <strong>label</strong> 属性，改变节点的文本</p>
+<p>再调用 <strong>graph.layout()</strong> 重新以当前配置的属性进行一次布局</p>
+<div align="center">
+    <img src="/2023/07/14/创建一个力导向气泡图/bubb2.png" style="height: 250px; width: 500px;">
+</div>
+
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">graph.<span class="title function_">on</span>(<span class="string">&#x27;node:click&#x27;</span>, <span class="keyword">function</span> (<span class="params">e</span>) &#123;</span><br><span class="line">  <span class="comment">// debugger;</span></span><br><span class="line">  <span class="keyword">const</span> node = e.<span class="property">item</span>; <span class="comment">//拿到当前点击的节点</span></span><br><span class="line">  <span class="keyword">const</span> states = node.<span class="title function_">getStates</span>(); <span class="comment">//返回当前元素的所有状态 啥也没有</span></span><br><span class="line">  <span class="keyword">let</span> clicked = <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">const</span> model = node.<span class="title function_">getModel</span>(); <span class="comment">// 获得节点位置</span></span><br><span class="line">  <span class="keyword">let</span> size = <span class="number">200</span>; <span class="comment">// 点击后的大小</span></span><br><span class="line">  <span class="keyword">let</span> labelText = <span class="string">&#x27;NODE: &#x27;</span> + model.<span class="property">id</span> + <span class="string">&#x27;\n&#x27;</span> + model.<span class="property">description</span>; <span class="comment">// 拼接： &quot;NODE:  this is node 8, and the value of it is 21&quot;</span></span><br><span class="line">  states.<span class="title function_">forEach</span>(<span class="keyword">function</span> (<span class="params">state</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (state === <span class="string">&#x27;click&#x27;</span>) &#123;</span><br><span class="line">      clicked = <span class="literal">true</span>;</span><br><span class="line">      size = model.<span class="property">oriSize</span>;</span><br><span class="line">      labelText = model.<span class="property">oriLabel</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  graph.<span class="title function_">setItemState</span>(node, <span class="string">&#x27;click&#x27;</span>, !clicked); <span class="comment">//设置元素状态(元素实例，状态值，是否启用状态)</span></span><br><span class="line">  <span class="comment">// 更新元素，包括更新数据、样式等</span></span><br><span class="line">  graph.<span class="title function_">updateItem</span>(node, &#123;</span><br><span class="line">    size,</span><br><span class="line">    <span class="attr">label</span>: labelText,</span><br><span class="line">  &#125;);</span><br><span class="line">  graph.<span class="title function_">layout</span>(); <span class="comment">// graph.layout()重新以当前配置的属性进行一次布局</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<h1 id="5-初始化图数据"><a href="#5-初始化图数据" class="headerlink" title="5 初始化图数据"></a>5 初始化图数据</h1><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">graph.<span class="title function_">data</span>(data); <span class="comment">// 初始化图数据，data是一个包括 节点 数组和 边 数组的对象</span></span><br><span class="line">graph.<span class="title function_">render</span>();</span><br></pre></td></tr></table></figure>
+
+<h2 id="6-执行时机"><a href="#6-执行时机" class="headerlink" title="6 执行时机"></a>6 执行时机</h2><p>因为要操作 DOM，因此上述 JS 代码在 <strong>mounted()</strong> 调用</p>
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/07/12/Vue2%E6%BA%90%E7%A0%81%EF%BC%9Adiff%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">Vue2源码：diff 算法原理</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+  <div class="inner">
+    <div class="links">
+      
+        <div class="group">
+          <h2 class="title">
+            Blog
+          </h2>
+          
+            <a href="/" class="item">
+              Blog
+            </a>
+            
+            <a href="/archives" class="item">
+              Archives
+            </a>
+            
+            <a href="/tags" class="item">
+              Tags
+            </a>
+            
+            <a href="/categories" class="item">
+              Categories
+            </a>
+            
+            <a href="/search" class="item">
+              Search
+            </a>
+            
+            <a href="/friends" class="item">
+              Friends
+            </a>
+            
+            <a href="/about" class="item">
+              About
+            </a>
+            
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Projects
+          </h2>
+          
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Me
+          </h2>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">
+              GitHub
+            </a>
+            
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">
+              CSDN
+            </a>
+            
+        </div>
+        
+    </div>
+    <span>&copy; 2023
+        Duan WeiCheng
+          <!-- Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> -->
+    </span>
+    
+        
+          <br>
+          <div style="margin-top: 15px; color: #06c;">
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <span id="busuanzi_container_site_pv">访问量 <span id="busuanzi_value_site_pv"></span> 次</span>
+          </div>
+          <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+            <label>
+              <input type="radio" value="light">
+              <span>Light</span>
+            </label>
+            <label>
+              <input type="radio" value="dark">
+              <span>Dark</span>
+            </label>
+            <label>
+              <input type="radio" value="auto">
+              <span>Auto</span>
+            </label>
+          </div>
+          
+  </div>
+</footer>
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>
