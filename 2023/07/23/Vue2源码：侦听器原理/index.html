@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    
+      <title>
+        
+          Vue2源码：侦听器原理 - 
+              iCheng
+      </title>
+      
+        <link rel="shortcut icon" href="/theme-img/logo.png">
+          
+            
+              <link rel='manifest' href='/manifest.json'>
+              
+
+                
+                  
+                    
+                      <meta property="og:title" content="Vue2源码：侦听器原理 - iCheng" />
+                      
+                      <meta property="og:type" content="article" />
+                      
+                      <meta property="og:url" content="http://example.com/2023/07/23/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E4%BE%A6%E5%90%AC%E5%99%A8%E5%8E%9F%E7%90%86/index.html" />
+                      
+                      <meta property="og:image" content="/favicon.png" />
+                      
+                      <meta property="og:article:published_time" content="2023-07-23T08:38:56.000Z" />
+                      
+                      <meta property="og:article:author" content="Duan WeiCheng" />
+                      
+                        
+
+                          
+<link rel="stylesheet" href="/css/var.css">
+
+                            
+<link rel="stylesheet" href="/css/main.css">
+
+                              
+<link rel="stylesheet" href="/css/typography.css">
+
+                                
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+                                  
+<link rel="stylesheet" href="/css/components.css">
+
+                                    
+<link rel="stylesheet" href="/css/nav.css">
+
+                                      
+<link rel="stylesheet" href="/css/paginator.css">
+
+                                        
+<link rel="stylesheet" href="/css/footer.css">
+
+                                          
+<link rel="stylesheet" href="/css/post-list.css">
+
+                                            
+                                              
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+                                                
+                                                  
+                                                    
+<link rel="stylesheet" href="/css/toc.css">
+
+                                                      
+                                                        
+                                                          
+<link rel="stylesheet" href="/css/giscus.css">
+
+                                                            
+                                                              
+                                                                    
+                                                                      
+<link rel="stylesheet" href="/css/post.css">
+
+                                                                        
+                                                                          
+                                                                                
+                                                                                      
+                                                                                            
+
+                                                                                                  
+                                                                                                      <meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+        <div class="categories text-uppercase">
+        
+            <a href="/categories/源码解析/">源码解析</a>
+        
+        </div>
+        
+
+        
+        <div class="date" id="date">
+            <span>July</span>
+            <span>23,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">Vue2源码：侦听器原理</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <p>watch的源码原理属于比较简单清晰的了</p>
+<p>当然要理解还需要配合前面几篇：依赖收集、派发更新、数据劫持</p>
+<h1 id="1-watch的入口"><a href="#1-watch的入口" class="headerlink" title="1 watch的入口"></a>1 watch的入口</h1><blockquote>
+<p>源码位置：vue-main\src\core\instance\state.ts</p>
+</blockquote>
+<p>initState() 方法中，判断 opts.watch 如果存在，则执行 initWatch 进行监听器初始化</p>
+<h1 id="2-创建-user-Watcher"><a href="#2-创建-user-Watcher" class="headerlink" title="2 创建 user Watcher"></a>2 创建 user Watcher</h1><p>首先 Vue 中定义了 3 个 watcher</p>
+<ul>
+<li>render watcher：模板依赖并且需要显示在视图上变量，其内部保存了一个 render watcher</li>
+<li>computed watcher：计算属性内部保存了一个 computed watcher</li>
+<li>user watcher：使用 watch 侦听的属性内部保存了一个 user watcher</li>
+</ul>
+<p>user watcher 就是侦听器创建的，下面我们来看看是怎样实现的</p>
+<h2 id="2-1-watch的写法"><a href="#2-1-watch的写法" class="headerlink" title="2.1 watch的写法"></a>2.1 watch的写法</h2><p>首先，我们要了解 watch 的几种写法</p>
+<p>数组写法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">watch</span>: &#123;</span><br><span class="line">    <span class="attr">firstname</span>: [</span><br><span class="line">      <span class="function">(<span class="params">newValue,oldValue</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(newValue, oldValue)</span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="function">(<span class="params">newValue,oldValue</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(newValue, oldValue)</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<p>字符串写法：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">watch</span>: &#123;</span><br><span class="line">    <span class="title function_">firstname</span>(<span class="params">newValue,oldValue</span>)&#123;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(newValue, oldValue)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-2-initWatch-初始化"><a href="#2-2-initWatch-初始化" class="headerlink" title="2.2 initWatch 初始化"></a>2.2 initWatch 初始化</h2><p>这里用来<strong>判断 watch侦听器 的类型</strong></p>
+<ul>
+<li>如果是数组形式，则遍历，依次创建 Wacther</li>
+<li>如果是字符串形式，直接创建 Wacther</li>
+</ul>
+<p>看看源码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">initWatch</span>(<span class="params">vm: Component, watch: <span class="built_in">Object</span></span>) &#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> key <span class="keyword">in</span> watch) &#123;</span><br><span class="line">    <span class="keyword">const</span> handler = watch[key]</span><br><span class="line">    <span class="keyword">if</span> (<span class="title function_">isArray</span>(handler)) &#123;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; handler.<span class="property">length</span>; i++) &#123;</span><br><span class="line">        <span class="title function_">createWatcher</span>(vm, key, handler[i])</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="title function_">createWatcher</span>(vm, key, handler)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-3-创建-Watcher"><a href="#2-3-创建-Watcher" class="headerlink" title="2.3 创建 Watcher"></a>2.3 创建 Watcher</h2><ul>
+<li>第一步，首先 <strong>拿到侦听器的回调函数 handler</strong></li>
+<li>第二步，将 回调函数 handler 作为参数，<strong>去创建 Watcher</strong></li>
+</ul>
+<p>第一步：</p>
+<p>createWatcher() 方法中源码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">createWatcher</span>(<span class="params"></span></span><br><span class="line"><span class="params">  vm: Component,</span></span><br><span class="line"><span class="params">  expOrFn: string | (() =&gt; any),</span></span><br><span class="line"><span class="params">  handler: any,</span></span><br><span class="line"><span class="params">  options?: <span class="built_in">Object</span></span></span><br><span class="line"><span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="title function_">isPlainObject</span>(handler)) &#123;</span><br><span class="line">    options = handler</span><br><span class="line">    handler = handler.<span class="property">handler</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 回调是字符串的情况</span></span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> handler === <span class="string">&#x27;string&#x27;</span>) &#123;</span><br><span class="line">    handler = vm[handler]</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 去创建 Watcher</span></span><br><span class="line">  <span class="keyword">return</span> vm.$watch(expOrFn, handler, options)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注：回调是字符串的情况</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">methods</span>: &#123;</span><br><span class="line">	<span class="title function_">myFn</span>(<span class="params">newValue, oldValue</span>)&#123;</span><br><span class="line">		<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;changed&quot;</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="attr">watch</span>: &#123;</span><br><span class="line">	<span class="attr">firstname</span>: <span class="string">&#x27;myFn&#x27;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>第二步：</p>
+<p>然后会执行 <strong>vm上的$watch</strong>， <strong>去创建 Watcher</strong></p>
+<blockquote>
+<p>源码位置：vue-main\src\core\instance\state.ts</p>
+</blockquote>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// user置为true 表示创建监听器的watcher</span></span><br><span class="line">options.<span class="property">user</span> = <span class="literal">true</span></span><br><span class="line"><span class="comment">// 创建创建监听器的watcher</span></span><br><span class="line"><span class="keyword">const</span> watcher = <span class="keyword">new</span> <span class="title class_">Watcher</span>(vm, expOrFn, cb, options) <span class="comment">// expOrFn是函数名 cb是回调函数</span></span><br></pre></td></tr></table></figure>
+
+<p>到这里，user Watcher 就创建好了</p>
+<h1 id="3-初始化和更新"><a href="#3-初始化和更新" class="headerlink" title="3 初始化和更新"></a>3 初始化和更新</h1><h2 id="3-1-初始化"><a href="#3-1-初始化" class="headerlink" title="3.1 初始化"></a>3.1 初始化</h2><p>当我们在代码中使用了 watch侦听器</p>
+<p>经过初始化后，创建好了 user Watcher</p>
+<p>经过上面的流程后，最终会进入 <code>new Watcher</code> 的逻辑，这里面也是依赖收集和更新的触发点</p>
+<p>Watcher 会默认调用 <strong>get()</strong> 方法，<strong>这是 watcher 求值的普遍方法</strong></p>
+<ul>
+<li>首先 pushTarget  将当前的 user Watcher 挂到 <code>Dep.target</code> 上。</li>
+<li>然后调用 <code>getter</code> 函数，<strong>做依赖收集，拿到新值</strong></li>
+<li>最后 popTarget() 弹出</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">get</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="title function_">pushTarget</span>(<span class="variable language_">this</span>)</span><br><span class="line">    <span class="keyword">let</span> value</span><br><span class="line">    <span class="keyword">const</span> vm = <span class="variable language_">this</span>.<span class="property">vm</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      value = <span class="variable language_">this</span>.<span class="property">getter</span>.<span class="title function_">call</span>(vm, vm)  <span class="comment">// 调用函数</span></span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="attr">e</span>: any) &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">user</span>) &#123;</span><br><span class="line">        <span class="title function_">handleError</span>(e, vm, <span class="string">`getter for watcher &quot;<span class="subst">$&#123;<span class="variable language_">this</span>.expression&#125;</span>&quot;`</span>)</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">throw</span> e</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">// &quot;touch&quot; every property so they are all tracked as</span></span><br><span class="line">      <span class="comment">// dependencies for deep watching</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">deep</span>) &#123;</span><br><span class="line">        <span class="title function_">traverse</span>(value)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="title function_">popTarget</span>()</span><br><span class="line">      <span class="variable language_">this</span>.<span class="title function_">cleanupDeps</span>()</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> value</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-2-更新"><a href="#3-2-更新" class="headerlink" title="3.2 更新"></a>3.2 更新</h2><p>当修改侦听的属性后</p>
+<p>数据劫持会触发 set</p>
+<p>因为前面做过依赖收集了，在派发更新时，会通知 user Watcher 执行 update（最终会执行run方法）</p>
+<p>run() 方法中：</p>
+<ul>
+<li>会触发 get() 取新值 <strong>value</strong></li>
+<li>并缓存旧值 <strong>oldValue</strong></li>
+<li>最后触发回调函数 <strong>cb</strong></li>
+</ul>
+<p>run() 源码：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">run</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">active</span>) &#123;</span><br><span class="line">    <span class="comment">// 拿到新值</span></span><br><span class="line">    <span class="keyword">const</span> value = <span class="variable language_">this</span>.<span class="title function_">get</span>()</span><br><span class="line">    <span class="keyword">if</span> (</span><br><span class="line">      value !== <span class="variable language_">this</span>.<span class="property">value</span> ||</span><br><span class="line">      <span class="comment">// Deep watchers and watchers on Object/Arrays should fire even</span></span><br><span class="line">      <span class="comment">// when the value is the same, because the value may</span></span><br><span class="line">      <span class="comment">// have mutated.</span></span><br><span class="line">      <span class="title function_">isObject</span>(value) ||</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">deep</span></span><br><span class="line">    ) &#123;</span><br><span class="line">      <span class="comment">// 缓存旧值</span></span><br><span class="line">      <span class="keyword">const</span> oldValue = <span class="variable language_">this</span>.<span class="property">value</span></span><br><span class="line">      <span class="comment">// 赋予新值</span></span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">value</span> = value</span><br><span class="line">      <span class="comment">// 触发回调函数 cb</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">user</span>) &#123;</span><br><span class="line">        <span class="keyword">const</span> info = <span class="string">`callback for watcher &quot;<span class="subst">$&#123;<span class="variable language_">this</span>.expression&#125;</span>&quot;`</span></span><br><span class="line">        <span class="title function_">invokeWithErrorHandling</span>(</span><br><span class="line">          <span class="variable language_">this</span>.<span class="property">cb</span>,</span><br><span class="line">          <span class="variable language_">this</span>.<span class="property">vm</span>,</span><br><span class="line">          [value, oldValue],</span><br><span class="line">          <span class="variable language_">this</span>.<span class="property">vm</span>,</span><br><span class="line">          info</span><br><span class="line">        )</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">cb</span>.<span class="title function_">call</span>(<span class="variable language_">this</span>.<span class="property">vm</span>, value, oldValue)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="4-深度监听"><a href="#4-深度监听" class="headerlink" title="4 深度监听"></a>4 深度监听</h1><p>深度监听是 <code>watch</code> 监听中一项很重要的配置，它能为我们观察对象中任何一个属性的变化。</p>
+<p>目光再拉回到 <strong>get()</strong> 函数，其中有一段代码是这样的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">deep</span>) &#123;</span><br><span class="line">  <span class="title function_">traverse</span>(value)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>traverse方法源码位置：&#x2F;src&#x2F;core&#x2F;observer&#x2F;traverse.js</p>
+</blockquote>
+<p>它主要做的事情就是：</p>
+<p>递归获取每一项属性，触发它们的“数据劫持<code>get</code>”收集依赖</p>
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/07/23/Vue2%E6%BA%90%E7%A0%81%EF%BC%9A%E8%AE%A1%E7%AE%97%E5%B1%9E%E6%80%A7%E5%8E%9F%E7%90%86/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">Vue2源码：计算属性原理</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+  <div class="inner">
+    <div class="links">
+      
+        <div class="group">
+          <h2 class="title">
+            Blog
+          </h2>
+          
+            <a href="/" class="item">
+              Blog
+            </a>
+            
+            <a href="/archives" class="item">
+              Archives
+            </a>
+            
+            <a href="/tags" class="item">
+              Tags
+            </a>
+            
+            <a href="/categories" class="item">
+              Categories
+            </a>
+            
+            <a href="/search" class="item">
+              Search
+            </a>
+            
+            <a href="/friends" class="item">
+              Friends
+            </a>
+            
+            <a href="/about" class="item">
+              About
+            </a>
+            
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Projects
+          </h2>
+          
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Me
+          </h2>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">
+              GitHub
+            </a>
+            
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">
+              CSDN
+            </a>
+            
+        </div>
+        
+    </div>
+    <span>&copy; 2023
+        Duan WeiCheng
+          <!-- Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> -->
+    </span>
+    
+        
+          <br>
+          <div style="margin-top: 15px; color: #06c;">
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <span id="busuanzi_container_site_pv">访问量 <span id="busuanzi_value_site_pv"></span> 次</span>
+          </div>
+          <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+            <label>
+              <input type="radio" value="light">
+              <span>Light</span>
+            </label>
+            <label>
+              <input type="radio" value="dark">
+              <span>Dark</span>
+            </label>
+            <label>
+              <input type="radio" value="auto">
+              <span>Auto</span>
+            </label>
+          </div>
+          
+  </div>
+</footer>
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>
