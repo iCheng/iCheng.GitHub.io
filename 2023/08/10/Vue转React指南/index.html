@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    
+      <title>
+        
+          Vue 转 React 指南 - 
+              iCheng
+      </title>
+      
+        <link rel="shortcut icon" href="/theme-img/logo.png">
+          
+            
+              <link rel='manifest' href='/manifest.json'>
+              
+
+                
+                  
+                    
+                      <meta property="og:title" content="Vue 转 React 指南 - iCheng" />
+                      
+                      <meta property="og:type" content="article" />
+                      
+                      <meta property="og:url" content="http://example.com/2023/08/10/Vue%E8%BD%ACReact%E6%8C%87%E5%8D%97/index.html" />
+                      
+                      <meta property="og:image" content="/favicon.png" />
+                      
+                      <meta property="og:article:published_time" content="2023-08-10T12:33:39.000Z" />
+                      
+                      <meta property="og:article:author" content="Duan WeiCheng" />
+                      
+                        
+
+                          
+<link rel="stylesheet" href="/css/var.css">
+
+                            
+<link rel="stylesheet" href="/css/main.css">
+
+                              
+<link rel="stylesheet" href="/css/typography.css">
+
+                                
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+                                  
+<link rel="stylesheet" href="/css/components.css">
+
+                                    
+<link rel="stylesheet" href="/css/nav.css">
+
+                                      
+<link rel="stylesheet" href="/css/paginator.css">
+
+                                        
+<link rel="stylesheet" href="/css/footer.css">
+
+                                          
+<link rel="stylesheet" href="/css/post-list.css">
+
+                                            
+                                              
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+                                                
+                                                  
+                                                    
+<link rel="stylesheet" href="/css/toc.css">
+
+                                                      
+                                                        
+                                                          
+<link rel="stylesheet" href="/css/giscus.css">
+
+                                                            
+                                                              
+                                                                    
+                                                                      
+<link rel="stylesheet" href="/css/post.css">
+
+                                                                        
+                                                                          
+                                                                                
+                                                                                      
+                                                                                            
+
+                                                                                                  
+                                                                                                      <meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+        <div class="categories text-uppercase">
+        
+            <a href="/categories/React/">React</a>
+        
+        </div>
+        
+
+        
+        <div class="date" id="date">
+            <span>August</span>
+            <span>10,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">Vue 转 React 指南</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <h1 id="JSX"><a href="#JSX" class="headerlink" title="JSX"></a>JSX</h1><p>先介绍 React 唯一的一个语法糖：JSX。</p>
+<p>理解 JSX 语法并不困难，简单记住一句话，遇到 <code>&#123;&#125;</code> 符号内部解析为 JS 代码，遇到成对的 <code>&lt;&gt;</code> 符号内部解析为 HTML 代码。</p>
+<p>当你写下这个 React 组件时：</p>
+<figure class="highlight tsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">MyComponent</span>(<span class="params">props</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;props.hello&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最终会被自动工具翻译成：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">MyComponent</span>(<span class="params">props</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="title class_">React</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;div&#x27;</span>, <span class="literal">null</span>, props.<span class="property">hello</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>React 就是通过这个小小语法糖，实现在 JS 里面写 HTML，可能有小伙伴会说 HTML 与 JS 分离不是更好吗？责职分明，混合只会更乱。但当你体验到代码自动提示，自动检查，以及调试时精确定位到一行代码的好处时，就清楚 React 和 Vue 的差距了。</p>
+<h1 id="文本插值"><a href="#文本插值" class="headerlink" title="文本插值"></a>文本插值</h1><p><strong>vue种采用双括号</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;span&gt;Message: &#123;&#123; msg &#125;&#125;&lt;/span&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>react采用单括号</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">function MyComponent(props) &#123;</span><br><span class="line">    let msg = &#x27;XXX&#x27;</span><br><span class="line">    return &lt;div&gt;&#123; msg &#125;&lt;/div&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Attribute-绑定"><a href="#Attribute-绑定" class="headerlink" title="Attribute 绑定"></a>Attribute 绑定</h1><p><strong>vue中 想要响应式地绑定一个 attribute，应该使用 <code>v-bind</code> 指令</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;div v-bind:id=&quot;dynamicId&quot;&gt;&lt;/div&gt;</span><br><span class="line">&lt;div :id=&quot;dynamicId&quot;&gt;&lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>react中，使用单引号，或者使用单括号包裹表示动态绑定</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  let tmpID = &#x27;12&#x27;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div id=&#x27;12&#x27;&gt;id&lt;/div&gt;</span><br><span class="line">      &lt;div id=&#123;tmpID&#125;&gt;id&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>动态绑定多值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  let tmpObject = &#123;</span><br><span class="line">    id: 13,</span><br><span class="line">    className: &#x27;wrapper&#x27;</span><br><span class="line">  &#125;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div &#123;...tmpObject&#125;&gt;id&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">即：</span><br><span class="line"></span><br><span class="line">&lt;div id=&quot;13&quot; class=&quot;wrapper&quot;&gt;id&lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="参数-Arguments"><a href="#参数-Arguments" class="headerlink" title="参数 Arguments"></a>参数 Arguments</h1><p><strong>某些指令会需要一个“参数”，Vue在指令名后通过一个冒号隔开做标识。例如用 <code>v-bind</code> 指令</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;a v-bind:href=&quot;url&quot;&gt; ... &lt;/a&gt;</span><br><span class="line"></span><br><span class="line">&lt;!-- 简写 --&gt;</span><br><span class="line">&lt;a :href=&quot;url&quot;&gt; ... &lt;/a&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>React中则没有指令一说，而是采用如下方式：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// href跳转</span><br><span class="line">function App () &#123;</span><br><span class="line">  let tmpURL = &#x27;https://www.XXXXXXXX&#x27;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;a href=&#123;tmpURL&#125;&gt;&lt;/a&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="使用-JS-表达式"><a href="#使用-JS-表达式" class="headerlink" title="使用 JS 表达式"></a>使用 JS 表达式</h1><p><strong>React 遇到 <code>&#123;&#125;</code> 符号内部解析为 JS 代码</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  let tmpString = &#x27;--&#x27;;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div &gt;&#123;1 + 1&#125;&lt;/div&gt;</span><br><span class="line">      &lt;div &gt;&#123;&#x27;a&#x27; + &#x27;b&#x27;&#125;&lt;/div&gt;</span><br><span class="line">      &lt;div &gt;&#123;`1$&#123;tmpString&#125;1`&#125;&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>即：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;div&gt;2&lt;/div&gt;</span><br><span class="line">&lt;div&gt;ab&lt;/div&gt;</span><br><span class="line">&lt;div&gt;1--1&lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="事件处理"><a href="#事件处理" class="headerlink" title="事件处理"></a>事件处理</h1><p><strong>Vue中绑定事件处理：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- `greet` 是上面定义过的方法名 --&gt;</span><br><span class="line">&lt;button @click=&quot;greet&quot;&gt;Greet&lt;/button&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>React可以通过在组件中声明 事件处理 函数来响应事件</strong></p>
+<p>React中点击事件使用小驼峰形式：onClick</p>
+<p>在标签上写函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div onClick=&#123;() =&gt; alert(&#x27;点击出现弹框&#x27;)&#125;&gt;按钮&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>提前声明函数：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  function myFun () &#123;</span><br><span class="line">    alert(&#x27;点击出现弹框&#x27;)</span><br><span class="line">  &#125;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div onClick=&#123;myFun&#125;&gt;按钮&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意，<code>onClick=&#123;handleClick&#125;</code> 的结尾没有小括号！不要 <strong>调用</strong> 事件处理函数：你只需 <strong>传递给事件</strong> 即可。当用户点击按钮时，React 会调用你的事件处理函数。</p>
+<p>函数传参：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  function myFun (str) &#123;</span><br><span class="line">    alert(str)</span><br><span class="line">  &#125;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div onClick=&#123;() =&gt; myFun(&#x27;点击出现弹框&#x27;)&#125;&gt;按钮&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="动态参数"><a href="#动态参数" class="headerlink" title="动态参数"></a>动态参数</h1><p><strong>Vue在指令参数上也可以使用一个 JavaScript 表达式，需要包含在一对方括号内：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;a v-bind:[attributeName]=&quot;url&quot;&gt; ... &lt;/a&gt;</span><br><span class="line"></span><br><span class="line">&lt;!-- 简写 --&gt;</span><br><span class="line">&lt;a :[attributeName]=&quot;url&quot;&gt; ... &lt;/a&gt;</span><br></pre></td></tr></table></figure>
+
+<p>举例来说，如果你的组件实例有一个数据属性 <code>attributeName</code>，其值为 <code>&quot;href&quot;</code>，那么这个绑定就等价于 <code>v-bind:href</code>。</p>
+<p><strong>React 也可以通过动态参数绑定</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  const obj = &#123;</span><br><span class="line">    onClick: () =&gt; alert(&#x27;点击出现弹框&#x27;),</span><br><span class="line">    // ...还可以写更多事件</span><br><span class="line">  &#125;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;div &#123;...obj&#125;&gt;按钮&lt;/div&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="修饰符-Modifiers"><a href="#修饰符-Modifiers" class="headerlink" title="修饰符 Modifiers"></a>修饰符 Modifiers</h1><p>vue 修饰符是以点开头的特殊后缀</p>
+<p>表明指令需要以一些特殊的方式被绑定。例如 <code>.prevent</code> 修饰符会告知 <code>v-on</code> 指令对触发的事件调用 <code>event.preventDefault()</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;form @submit.prevent=&quot;onSubmit&quot;&gt;...&lt;/form&gt;</span><br></pre></td></tr></table></figure>
+
+<p>React 则是依靠于JS基础</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  function onSubmit(e)&#123;</span><br><span class="line">    e.preventDefault();</span><br><span class="line">    e.stopPropagation();</span><br><span class="line">  &#125;</span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &lt;form onSubmit=&#123;onSubmit&#125;&gt;</span><br><span class="line">        &lt;button type=&#x27;submit&#x27;&gt;&lt;/button&gt;</span><br><span class="line">      &lt;/form&gt;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="响应式"><a href="#响应式" class="headerlink" title="响应式"></a>响应式</h1><p><strong>为了实现视图更新，VUE中响应式是一个重要的概念</strong></p>
+<p><strong>而 React 中并没有响应式这个概念，要实现视图更新，需要在 React 引入 <code>useState</code></strong></p>
+<p>通常，你会希望你的组件 “记住” 一些信息并展示出来。例如，也许你想计算一个按钮被点击的次数。要做到这一点，你需要在你的组件中添加 <strong>state</strong>。</p>
+<p>首先，从 React 引入 <code>useState</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">import &#123; useState &#125; from &#x27;react&#x27;;</span><br></pre></td></tr></table></figure>
+
+<p>现在你可以在你的组件中声明一个 <strong>state 变量</strong>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function MyButton() &#123;</span><br><span class="line">  const [count, setCount] = useState(0);</span><br><span class="line">  // ...</span><br></pre></td></tr></table></figure>
+
+<p>你将从 <code>useState</code> 中获得两样东西：当前的 state（<code>count</code>），以及用于更新它的函数（<code>setCount</code>）。你可以给它们起任何名字，但按照惯例，需要像这样 <code>[something, setSomething]</code> 为它们命名。</p>
+<p>第一次显示按钮时，<code>count</code> 的值为 <code>0</code>，因为你把 <code>0</code> 传给了 <code>useState()</code>。当你想改变 state 时，调用 <code>setCount()</code> 并将新的值传递给它。点击该按钮计数器将递增：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">function MyButton() &#123;</span><br><span class="line">  const [count, setCount] = useState(0);</span><br><span class="line">  function handleClick() &#123;</span><br><span class="line">    setCount(count + 1);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  return (</span><br><span class="line">    &lt;button onClick=&#123;handleClick&#125;&gt;</span><br><span class="line">      Clicked &#123;count&#125; times</span><br><span class="line">    &lt;/button&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>React 将再次调用你的组件函数。这次，<code>count</code> 会变成 <code>1</code>。接着，变成 <code>2</code>。以此类推。</p>
+<p>如果你多次渲染同一个组件，每个组件都会拥有自己的 state。你可以尝试点击不同的按钮：</p>
+<h1 id="计算属性"><a href="#计算属性" class="headerlink" title="计算属性"></a>计算属性</h1><p>Vue中使用 watch 来实现计算属性（缓存计算的结果）</p>
+<p><strong>React 在组件的顶层调用 <code>useMemo</code> 来缓存每次重新渲染都需要计算的结果</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">import &#123; useState &#125; from &#x27;react&#x27;;</span><br><span class="line">import &#123; useMemo &#125; from &#x27;react&#x27;;</span><br><span class="line"></span><br><span class="line">function App () &#123;</span><br><span class="line">  const [user] = useState(&#123; firstname: &#x27;a&#x27;, lastname: &#x27;b&#x27; &#125;)</span><br><span class="line"></span><br><span class="line">  const fullname = useMemo(() =&gt; &#123;</span><br><span class="line">    return user.firstname + user.lastname;</span><br><span class="line">  &#125;, [user.firstname, user.lastname])</span><br><span class="line"></span><br><span class="line">  return (</span><br><span class="line">    &lt;div className=&#x27;App&#x27;&gt;</span><br><span class="line">      &#123;fullname&#125;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>useMemo(calculateValue, dependencies)</strong></p>
+<h4 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h4><ul>
+<li><code>calculateValue</code>：要缓存计算值的函数。它应该是一个没有任何参数的纯函数，并且可以返回任意类型。React 将会在首次渲染时调用该函数；在之后的渲染中，如果 <code>dependencies</code> 没有发生变化，React 将直接返回相同值。否则，将会再次调用 <code>calculateValue</code> 并返回最新结果，然后缓存该结果以便下次重复使用。</li>
+<li><code>dependencies</code>：所有在 <code>calculateValue</code> 函数中使用的响应式变量组成的数组。响应式变量包括 props、state 和所有你直接在组件中定义的变量和函数。如果你在代码检查工具中 <a target="_blank" rel="noopener" href="https://react.docschina.org/learn/editor-setup#linting">配置了 React</a>，它将会确保每一个响应式数据都被正确地定义为依赖项。依赖项数组的长度必须是固定的并且必须写成 <code>[dep1, dep2, dep3]</code> 这种形式。React 使用 <a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/is"><code>Object.is</code></a> 将每个依赖项与其之前的值进行比较。</li>
+</ul>
+<h1 id="绑定-HTML-class"><a href="#绑定-HTML-class" class="headerlink" title="绑定 HTML class"></a>绑定 HTML class</h1><p>数据绑定的一个常见需求场景是操纵元素的 CSS class 列表和内联样式。因为 <code>class</code> 和 <code>style</code> 都是 attribute</p>
+<p>Vue中可以给 <code>:class</code> (<code>v-bind:class</code> 的缩写) 传递一个对象来动态切换 class：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;div :class=&quot;&#123; active: isActive &#125;&quot;&gt;&lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+<p>上面的语法表示 <code>active</code> 是否存在取决于数据属性 <code>isActive</code> 的真假值。</p>
+<p>React实现方式基于js语法，其实有多种实现方式，列举三元运算符方式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  let showColor = false</span><br><span class="line">  return (</span><br><span class="line">    // 现有box-show、box-hide两个class样式</span><br><span class="line">    &lt;div className=&#123;showColor ? &#x27;box-show&#x27; : &#x27;box-hide&#x27;&#125;&gt;&lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>………………….再更新</p>
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/08/03/N%E4%B8%AA%E5%AE%9E%E7%8E%B0%E6%B0%B4%E5%B9%B3%E5%9E%82%E7%9B%B4%E5%B1%85%E4%B8%AD%E7%9A%84%E6%96%B9%E6%B3%95/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">N个实现水平垂直居中的方法</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+  <div class="inner">
+    <div class="links">
+      
+        <div class="group">
+          <h2 class="title">
+            Blog
+          </h2>
+          
+            <a href="/" class="item">
+              Blog
+            </a>
+            
+            <a href="/archives" class="item">
+              Archives
+            </a>
+            
+            <a href="/tags" class="item">
+              Tags
+            </a>
+            
+            <a href="/categories" class="item">
+              Categories
+            </a>
+            
+            <a href="/search" class="item">
+              Search
+            </a>
+            
+            <a href="/friends" class="item">
+              Friends
+            </a>
+            
+            <a href="/about" class="item">
+              About
+            </a>
+            
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Projects
+          </h2>
+          
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Me
+          </h2>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">
+              GitHub
+            </a>
+            
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">
+              CSDN
+            </a>
+            
+        </div>
+        
+    </div>
+    <span>&copy; 2023
+        Duan WeiCheng
+          <!-- Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> -->
+    </span>
+    
+        
+          <br>
+          <div style="margin-top: 15px; color: #06c;">
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <span id="busuanzi_container_site_pv">访问量 <span id="busuanzi_value_site_pv"></span> 次</span>
+          </div>
+          <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+            <label>
+              <input type="radio" value="light">
+              <span>Light</span>
+            </label>
+            <label>
+              <input type="radio" value="dark">
+              <span>Dark</span>
+            </label>
+            <label>
+              <input type="radio" value="auto">
+              <span>Auto</span>
+            </label>
+          </div>
+          
+  </div>
+</footer>
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>
