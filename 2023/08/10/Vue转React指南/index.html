@@ -261,7 +261,28 @@
 
 
 
-<p>………………….再更新</p>
+<h1 id="语法糖转换"><a href="#语法糖转换" class="headerlink" title="语法糖转换"></a>语法糖转换</h1><p>习惯 Vue 的同学都知道很多语法糖，比如 <code>v-if</code>、<code>v-for</code>、<code>v-bind</code>、<code>v-on</code> 等，相比 Vue，React 只有一个语法糖，那就是 jsx&#x2F;tsx。<code>v-if</code> 这些功能在 React 上都是通过原生 javascript 实现的，慢慢你会发现，其实你学的不是 React，而是 Javascipt，React 赋予你通过 js 完整控制组件的能力，这部分明显比 Vue 的语法糖更加灵活，糖太多容易引来虫子（Bug）</p>
+<h2 id="条件渲染"><a href="#条件渲染" class="headerlink" title="条件渲染"></a>条件渲染</h2><p>vue 中写法是这样：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;div&gt;</span><br><span class="line">    &lt;h1 v-if=&quot;ishow&quot;&gt;Vue is awesome!&lt;/h1&gt;</span><br><span class="line">    &lt;h1 v-else&gt;else&lt;/h1&gt;</span><br><span class="line">&lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>在 React 函数组件中，只需使用 js 三目运算符语法即可完成条件渲染的功能。或者使用 &amp;&amp; 逻辑，记住下面一句话就能过理解了：</p>
+<blockquote>
+<p>遇到 <code>&#123;&#125;</code> 符号内部解析为 JS 代码，遇到成对的 <code>&lt;&gt;</code> 符号内部解析为 HTML 代码</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  const ishow = false</span><br><span class="line">  return (</span><br><span class="line">    &lt;div&gt;</span><br><span class="line">      &#123;ishow ? &lt;div&gt;awesome&lt;/div&gt; : &lt;div&gt;else&lt;/div&gt;&#125;</span><br><span class="line">      &#123;ishow &amp;&amp; &lt;h1&gt;React!&lt;/h1&gt;&#125;</span><br><span class="line">    &lt;/div&gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="列表渲染"><a href="#列表渲染" class="headerlink" title="列表渲染"></a>列表渲染</h2><p>Vue中通过v-for进行列表渲染</p>
+<p><strong>React 通过 js 的数组语法 map，将数据对象映射为 DOM 对象</strong>。只需学会 js，无需记住各种指令，如果要做列表过滤，直接使用 <code>items.filter(...).map(...)</code> 链式调用即可，语法上更加灵活，如果为了提高渲染性能，使用 useMemo 进行优化即可，类似 Vue 的 computed。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  const arr = [&#123; message: &#x27;react&#x27; &#125;, &#123; message: &#x27;JS&#x27; &#125;]</span><br><span class="line">  return (</span><br><span class="line">    &lt;div&gt;</span><br><span class="line">      &#123;arr.map((items, index) =&gt; &lt;li key=&#123;index&#125;&gt;&#123;items.message&#125;&lt;/li&gt;)&#125;</span><br><span class="line">    &lt;/div &gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="侦听器"><a href="#侦听器" class="headerlink" title="侦听器"></a>侦听器</h1><p>Vue中使用 watch监听数据变化，触发回调</p>
+<p>React中可以使用 useEffect 实现</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">function App () &#123;</span><br><span class="line">  const [user, setUser] = useState(&#123;</span><br><span class="line">    firstname: &#x27;a&#x27;,</span><br><span class="line">    lastname: &#x27;b&#x27;</span><br><span class="line">  &#125;)</span><br><span class="line">  useEffect(() =&gt; &#123;</span><br><span class="line">    console.log(&quot;1111&quot;)</span><br><span class="line">  &#125;, [user.firstname])</span><br><span class="line">  return (</span><br><span class="line">    &lt;div&gt;</span><br><span class="line">      &lt;button onClick=&#123;() =&gt; setUser(&#123; ...user, firstname: &#x27;a2&#x27; &#125;)&#125;&gt;&lt;/button&gt;</span><br><span class="line">    &lt;/div &gt;</span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 
     </div>
 
