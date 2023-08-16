@@ -235,7 +235,7 @@
 </blockquote>
 <ul>
 <li>然后，会调用原生数组方法（毕竟不能影响数组原本的功能）</li>
-<li>关键在于代码中间部分，他会调用 <code>__ob__.dep</code> 的 <code>notify </code>方法去通知它的watcher，告诉对方：我有变化了，你快更新吧；</li>
+<li>关键在于代码中间部分，他会调用 <code>__ob__.dep</code> 的 <code>notify </code>方法去通知watcher，告诉对方：我有变化了，你快更新吧；</li>
 <li>如果是能增加数组长度的 3 个方法 <code>push、unshift、splice</code> ，获取到插入的值，然后把新添加的值变成一个响应式对象（再次调用observeArray()）。</li>
 </ul>
 <p>这里的源码：</p>
@@ -246,6 +246,14 @@
 
 
 
+<h4 id="vue为什么没有提供对数组属性的监听呢？"><a href="#vue为什么没有提供对数组属性的监听呢？" class="headerlink" title="vue为什么没有提供对数组属性的监听呢？"></a>vue为什么没有提供对数组属性的监听呢？</h4><p>既然 Object.defineProperty 有劫持getter，setter能力，那么 vue 为什么没用它来实现对数组属性的监听呢？</p>
+<p>尤大在<a href="https://link.juejin.cn/?target=https://github.com/vuejs/vue/issues/8562">github</a>上这样回答：</p>
+<div align="center">
+    <img src="/2023/07/10/Vue2源码：数据劫持原理/1.jpg" style="height: 850px; width: 600px;">
+</div>
+
+<p>如果你知道数组的长度，理论上是可以预先给所有的索引设置 getter&#x2F;setter 的。但是一来很多场景下你不知道数组的长度，二来，如果是很大的数组，预先加 getter&#x2F;setter 性能负担较大。</p>
+<p>总而言之就是理论上 Vue 是可以这样做，但是出于性能考虑没这样做，而是用了一种数组变异办法来触发视图更新。</p>
 <h3 id="2-4-2-如果是对象"><a href="#2-4-2-如果是对象" class="headerlink" title="2.4.2 如果是对象"></a>2.4.2 如果是对象</h3><p>遍历对象的每个元素，执行 <code>defineReactive()</code> 方法逻辑如下:</p>
 <p>首先 new Dep()，该 dep 在后面 get set 时都会使用这个<strong>闭包产生的 dep</strong>，这个时候就能明白了数据对象中每个数据字段都有属于自己的 <code>dep</code> 常量（这里涉及到依赖收集理念）</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> dep = <span class="keyword">new</span> <span class="title class_">Dep</span>()</span><br></pre></td></tr></table></figure>
