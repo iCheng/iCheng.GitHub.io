@@ -292,6 +292,18 @@
 </ul>
 <p>这便是数据劫持的主要内容</p>
 <p>想要理解它，还需要知道依赖收集中的 watcher、dep关系</p>
+<h1 id="3-Object-defineProperty-API缺点"><a href="#3-Object-defineProperty-API缺点" class="headerlink" title="3 Object.defineProperty API缺点"></a>3 Object.defineProperty API缺点</h1><h2 id="3-1-不能监听对象-x2F-数组新增和删除"><a href="#3-1-不能监听对象-x2F-数组新增和删除" class="headerlink" title="3.1 不能监听对象&#x2F;数组新增和删除"></a>3.1 不能监听对象&#x2F;数组新增和删除</h2><p>在模板中使用对象属性peo</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#123; peo &#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>点击事件，为对象新增一个属性 c ，但是界面不会更新数据</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">this.peo.c = &#x27;5555&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>解决方法：</p>
+<p>使用 <strong>this.$set(object, key, value)</strong> 新增</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">this.$set(this.peo, &#x27;c&#x27;, 5555);</span><br></pre></td></tr></table></figure>
+
+<p>而数组前面说过了，只能通过splice、push、unshift方法新增和删除，直接修改数组索引，也是无法监听的</p>
+<h2 id="3-2-初始化阶段递归执行-Object-defineProperty-带来的性能负担"><a href="#3-2-初始化阶段递归执行-Object-defineProperty-带来的性能负担" class="headerlink" title="3.2 初始化阶段递归执行 Object.defineProperty 带来的性能负担"></a>3.2 初始化阶段递归执行 Object.defineProperty 带来的性能负担</h2><p>为了将对象深度劫持，会递归执行Object.defineProperty，如果对象层级比较深，显然是比较大的性能负担</p>
 
     </div>
 
