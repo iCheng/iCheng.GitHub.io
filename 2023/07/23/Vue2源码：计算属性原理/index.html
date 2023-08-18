@@ -158,7 +158,8 @@
     <div class="divider"></div>
 
     <div class="content">
-        <h1 id="1-计算属性"><a href="#1-计算属性" class="headerlink" title="1 计算属性"></a>1 计算属性</h1><p>首先 Vue 中定义了 3 个 watcher</p>
+        <p>内心旁白：计算属性有点绕呀，看了好几遍了</p>
+<h1 id="1-计算属性"><a href="#1-计算属性" class="headerlink" title="1 计算属性"></a>1 计算属性</h1><p>首先 Vue 中定义了 3 个 watcher</p>
 <ul>
 <li>render watcher：模板依赖并且需要显示在视图上变量，其内部保存了一个 render watcher</li>
 <li>computed watcher：计算属性内部保存了一个 computed watcher</li>
@@ -166,12 +167,12 @@
 </ul>
 <p>render watcher 之前的文章已经分析过了</p>
 <p>下面会分析一下 computed watcher 的实现原理</p>
-<h1 id="2-计算属性的初始化过程"><a href="#2-计算属性的初始化过程" class="headerlink" title="2 计算属性的初始化过程"></a>2 计算属性的初始化过程</h1><p>一个计算属性的初始化分为2部分</p>
+<h1 id="2-计算属性的实现"><a href="#2-计算属性的实现" class="headerlink" title="2 计算属性的实现"></a>2 计算属性的实现</h1><p>一个计算属性的实现分为2部分</p>
 <ul>
 <li>实例化一个 computed watcher</li>
 <li>定义计算属性的 getter 函数</li>
 </ul>
-<h2 id="2-1-创建-computed-watcher"><a href="#2-1-创建-computed-watcher" class="headerlink" title="2.1 创建 computed watcher"></a>2.1 创建 computed watcher</h2><h3 id="2-1-1-计算属性的两种写法"><a href="#2-1-1-计算属性的两种写法" class="headerlink" title="2.1.1 计算属性的两种写法"></a>2.1.1 计算属性的两种写法</h3><p>首先计算属性有两种写法：直接写为 function 和 完整写法</p>
+<h2 id="2-1-创建-computed-watcher"><a href="#2-1-创建-computed-watcher" class="headerlink" title="2.1 创建 computed watcher"></a>2.1 创建 computed watcher</h2><h3 id="2-1-1-计算属性的两种写法的差异"><a href="#2-1-1-计算属性的两种写法的差异" class="headerlink" title="2.1.1 计算属性的两种写法的差异"></a>2.1.1 计算属性的两种写法的差异</h3><p>首先计算属性有两种写法：直接写为 function 和 完整写法</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">computed</span>: &#123;</span><br><span class="line">    <span class="comment">// defineProperty中的get方法</span></span><br><span class="line">    fullname () &#123; </span><br><span class="line">      <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">firstname</span> + <span class="variable language_">this</span>.<span class="property">lastname</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 完整写法</span></span><br><span class="line">    <span class="attr">fullname</span>:&#123;</span><br><span class="line">        <span class="title function_">get</span>(<span class="params"></span>)&#123;</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;run&#x27;</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">firstname</span> + <span class="variable language_">this</span>.<span class="property">lastname</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="title function_">set</span>(<span class="params">newVal</span>)&#123;</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(newVal)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
 
 <p>如何求得 fullname 值，第一种方法可以拿来直接用，第二种需要拿到它的get</p>
@@ -186,61 +187,73 @@
 <p><strong>然后</strong>，会进行实例化</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> computedWatcherOptions = &#123; <span class="attr">lazy</span>: <span class="literal">true</span> &#125;</span><br><span class="line"></span><br><span class="line">watchers[key] = <span class="keyword">new</span> <span class="title class_">Watcher</span>(</span><br><span class="line">        vm,</span><br><span class="line">        getter || noop,</span><br><span class="line">        noop,</span><br><span class="line">        computedWatcherOptions</span><br><span class="line">      )</span><br></pre></td></tr></table></figure>
 
-<p>new Watcher 时，传入 getter 方法，并传入 <strong>lazy: true</strong> 表示该 watcher 是 <strong>computed watcher</strong></p>
-<h3 id="2-1-3-重新劫持计算属性的-get"><a href="#2-1-3-重新劫持计算属性的-get" class="headerlink" title="2.1.3 重新劫持计算属性的 get"></a>2.1.3 重新劫持计算属性的 get</h3><p>createComputedGetter 方法重新定义了计算属性的 get</p>
+<p>new Watcher 时，传入用户定义的求值函数(getter)，并传入 <strong>lazy: true</strong> 表示该 watcher 是 <strong>computed watcher</strong></p>
+<h3 id="2-1-3-重新劫持计算属性的-get"><a href="#2-1-3-重新劫持计算属性的-get" class="headerlink" title="2.1.3 重新劫持计算属性的 get"></a>2.1.3 重新劫持计算属性的 get</h3><p>模板读取计算属性时，需要有计算属性自己的求值逻辑，所以要劫持它的 get</p>
+<p>createComputedGetter 方法重新定义了计算属性的 get </p>
 <p>当计算属性 fullname  求值时，会走这里</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">createComputedGetter</span>(<span class="params">key</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">function</span> <span class="title function_">computedGetter</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> watcher = <span class="variable language_">this</span>.<span class="property">_computedWatchers</span> &amp;&amp; <span class="variable language_">this</span>.<span class="property">_computedWatchers</span>[key]</span><br><span class="line">    <span class="keyword">if</span> (watcher) &#123;</span><br><span class="line">      <span class="comment">// 求新值</span></span><br><span class="line">      <span class="keyword">if</span> (watcher.<span class="property">dirty</span>) &#123;</span><br><span class="line">        watcher.evaluate()</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 让计算属性中依赖的属性 也去收集上一层watcher</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="title class_">Dep</span>.<span class="property">target</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (__DEV__ &amp;&amp; <span class="title class_">Dep</span>.<span class="property">target</span>.<span class="property">onTrack</span>) &#123;</span><br><span class="line">          <span class="title class_">Dep</span>.<span class="property">target</span>.<span class="title function_">onTrack</span>(&#123;</span><br><span class="line">            <span class="attr">effect</span>: <span class="title class_">Dep</span>.<span class="property">target</span>,</span><br><span class="line">            <span class="attr">target</span>: <span class="variable language_">this</span>,</span><br><span class="line">            <span class="attr">type</span>: <span class="title class_">TrackOpTypes</span>.<span class="property">GET</span>,</span><br><span class="line">            key</span><br><span class="line">          &#125;)</span><br><span class="line">        &#125;</span><br><span class="line">        watcher.<span class="title function_">depend</span>()</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> watcher.<span class="property">value</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">createComputedGetter</span>(<span class="params">key</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">function</span> <span class="title function_">computedGetter</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> watcher = <span class="variable language_">this</span>.<span class="property">_computedWatchers</span> &amp;&amp; <span class="variable language_">this</span>.<span class="property">_computedWatchers</span>[key]</span><br><span class="line">    <span class="keyword">if</span> (watcher) &#123;</span><br><span class="line">      <span class="comment">// 求新值</span></span><br><span class="line">      <span class="keyword">if</span> (watcher.<span class="property">dirty</span>) &#123;</span><br><span class="line">        watcher.evaluate()</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 让依赖的属性 也去渲染watcher</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="title class_">Dep</span>.<span class="property">target</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (__DEV__ &amp;&amp; <span class="title class_">Dep</span>.<span class="property">target</span>.<span class="property">onTrack</span>) &#123;</span><br><span class="line">          <span class="title class_">Dep</span>.<span class="property">target</span>.<span class="title function_">onTrack</span>(&#123;</span><br><span class="line">            <span class="attr">effect</span>: <span class="title class_">Dep</span>.<span class="property">target</span>,</span><br><span class="line">            <span class="attr">target</span>: <span class="variable language_">this</span>,</span><br><span class="line">            <span class="attr">type</span>: <span class="title class_">TrackOpTypes</span>.<span class="property">GET</span>,</span><br><span class="line">            key</span><br><span class="line">          &#125;)</span><br><span class="line">        &#125;</span><br><span class="line">        watcher.<span class="title function_">depend</span>()</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> watcher.<span class="property">value</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<p>这个方面里面也涉及到了 实现计算属性 的几个关键变量和方法</p>
 <h4 id="dirty"><a href="#dirty" class="headerlink" title="dirty"></a>dirty</h4><p>计算属性使用 dirty 属性来标记该数据是否是脏数据</p>
 <p>如果是脏数据，需要重新计算值</p>
 <p>否则可以直接使用旧值</p>
-<p>dirty 默认为 true，因此第一次取值，会进入 watcher.evaluate()</p>
-<h4 id="watcher-evaluate"><a href="#watcher-evaluate" class="headerlink" title="watcher.evaluate()"></a>watcher.evaluate()</h4><p>evaluate() 方法很简单</p>
+<p>dirty 默认为 true</p>
+<h4 id="watcher-evaluate"><a href="#watcher-evaluate" class="headerlink" title="watcher.evaluate()"></a>watcher.evaluate()</h4><p>evaluate() 是计算属性专用的方法，其实方法很简单</p>
 <p>首先使用 watcher 用来求值的通用方法： <strong>get()</strong> （计算属性入栈、求值、出栈）</p>
 <p>然后将 dirty 标记：不是脏数据</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">evaluate</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">value</span> = <span class="variable language_">this</span>.<span class="title function_">get</span>()</span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">dirty</span> = <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h4 id="watcher-depend"><a href="#watcher-depend" class="headerlink" title="watcher.depend()"></a>watcher.depend()</h4><p>让 <strong>计算属性watcher中依赖的属性</strong> 也去收集栈中的其他watcher</p>
 <p>它会遍历当前 computed watcher 的deps属性，依次执行 dep 的 depend 方法</p>
-<h1 id="3-举个栗子"><a href="#3-举个栗子" class="headerlink" title="3 举个栗子"></a>3 举个栗子</h1><h2 id="3-1-初始化"><a href="#3-1-初始化" class="headerlink" title="3.1 初始化"></a>3.1 初始化</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">模板：</span><br><span class="line">&#123;&#123; fullname &#125;&#125;</span><br><span class="line"></span><br><span class="line">定义计算属性：</span><br><span class="line"><span class="attr">computed</span>: &#123;</span><br><span class="line">    fullname () &#123; </span><br><span class="line">      <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">firstname</span> + <span class="variable language_">this</span>.<span class="property">lastname</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>知道了几个重要概念，下面举个例子更容易理解它的整体实现逻辑</strong></p>
+<h1 id="3-举个栗子"><a href="#3-举个栗子" class="headerlink" title="3 举个栗子"></a>3 举个栗子</h1><p>举例子之前首先得明确3点：</p>
+<ul>
+<li>computed watcher的 evaluate() 函数只是求值，标记dirty</li>
+<li>computed watcher的 update() 函数只是标记dirty为脏</li>
+<li>render watcher才会真正更新视图</li>
+</ul>
+<h2 id="3-1-初始化"><a href="#3-1-初始化" class="headerlink" title="3.1 初始化"></a>3.1 初始化</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">定义计算属性：</span><br><span class="line"><span class="attr">computed</span>: &#123;</span><br><span class="line">    fullname () &#123; </span><br><span class="line">      <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">firstname</span> + <span class="variable language_">this</span>.<span class="property">lastname</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>.</p>
 <p>首先，组件初始化时，已经有一个 <strong>render watcher</strong> 了。</p>
-<p>.</p>
-<p><strong>然后，实例化一个 computed watcher：</strong></p>
-<p>因为 dirty 默认为 true，会进入 watcher.evaluate() 方法</p>
-<p>使用 watcher 用来求值的通用方法：<strong>get()</strong></p>
-<p>计算属性入栈：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">pushTarget</span>(<span class="variable language_">this</span>)</span><br></pre></td></tr></table></figure>
+<p>dep 中 targetStack 栈会维护着 [render watcher]</p>
+<p><strong>然后，实例化一个 computed watcher，</strong>computed watcher <strong>不会</strong>执行默认的求值操作</p>
+<p>当模板中使用计算属性时</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#123; fullname &#125;&#125;</span><br></pre></td></tr></table></figure>
 
-<p><strong>求值：</strong></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">value = <span class="variable language_">this</span>.<span class="property">getter</span>.<span class="title function_">call</span>(vm, vm)</span><br></pre></td></tr></table></figure>
-
-<p>因为是 computed watcher， 所以 this.getter 是传来的求值函数，即：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fullname () &#123; </span><br><span class="line">  <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">firstname</span> + <span class="variable language_">this</span>.<span class="property">lastname</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>因为 this 指向问题，使用 call 改变指向</p>
-<p>求得的值，保存在 <strong>value</strong></p>
-<p>计算属性出栈：</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">popTarget</span>()</span><br></pre></td></tr></table></figure>
-
-<p>.</p>
-<p><strong>将 dirty 置为 false</strong></p>
-<p>如果下次又触发了这个计算属性的 getter 会直接跳过求值逻辑</p>
-<p>.</p>
-<p><strong>调用 watcher.depend()</strong></p>
-<p>让 <strong>计算属性watcher中的属性</strong> 也去收集 <strong>render watcher</strong></p>
-<p>它会遍历当前 computed watcher 的deps属性，依次执行 dep 的 depend 方法</p>
+<p><strong>才会执行求值操作</strong>，这时计算属性独有 getter 拦截，因为 dirty 默认为 true，会进入 watcher.evaluate() 方法</p>
+<p>watcher.evaluate() 方法做了两件事：get()、将 dirty 置为false</p>
+<ul>
+<li>get():</li>
+</ul>
+<p>watcher通用求值方法，求fullname</p>
+<p>计算属性入栈，targetStack: [render watcher,  computed watcher]，Dep.target 指向 computed watcher</p>
+<p>调用回调函数（用户定义的计算属性函数）求 fullname 值，也就会被 firstname 和 lastname 的 getter 劫持</p>
+<p>firstname 和 lastname 的 getterr：也就是会进行依赖收集</p>
+<p>firstname 和 lastname 的 dep 会新增computed watcher（因为Dep.target 指向 computed watcher）</p>
+<p>计算属性出栈</p>
+<ul>
+<li>将 dirty 置为false：标记为非脏数据。模板中如果再写  就不用再次求值了，而是使用计算属性的缓存值</li>
+</ul>
+<p><strong>到这里求值步骤就结束了</strong></p>
+<p>但前面说过了</p>
+<blockquote>
+<p>computed watcher的工作只是求值，标记dirty</p>
+<p>render watcher才会真正更新视图</p>
+</blockquote>
+<p>所以应该让 firstname 和 lastname 的 dep 也去收集 render watcher，当依赖的属性变化时能做到更新渲染</p>
+<p><strong>所以 computed watcher 的 getter 劫持中，watcher.depend() 方法就起作用了</strong></p>
+<p>让 firstname 和 lastname 也去收集 <strong>render watcher</strong></p>
+<p>所以说：<strong>计算属性(fullname)根本不会收集依赖，而是让它依赖的属性(firstname、lastname)去收集依赖</strong></p>
 <h2 id="3-2-依赖的属性发生变化"><a href="#3-2-依赖的属性发生变化" class="headerlink" title="3.2 依赖的属性发生变化"></a>3.2 依赖的属性发生变化</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">setTimeout</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">  vm.<span class="property">firstname</span> = <span class="string">&#x27;新值&#x27;</span>;</span><br><span class="line">&#125;, <span class="number">1000</span>)</span><br></pre></td></tr></table></figure>
 
 <p>只有当计算属性的依赖项被修改时，计算属性才会重新进行计算，生成一个新的值，而视图中其他变量被修改导致视图更新时，计算属性不会重新计算，这是怎么做到的呢？</p>
 <p>当计算属性的依赖项，即 firstName 和 lastName 被修改时，数据劫持会触发内部的 setter，执行 watcher 的 <strong>update</strong></p>
-<p><strong>通过前面的 <code>evaluate</code> 和 <code>depend</code> 方法，firstName 和 lastName 内部的 dep 中都会保存 2 个 watcher，一个 computed watcher，一个 render watcher</strong></p>
+<p><strong>初始化时，前面的 <code>evaluate</code> 和 <code>depend</code> 方法，firstName 和 lastName 内部的 dep 中都会保存 2 个 watcher，一个 computed watcher，一个 render watcher</strong></p>
 <div align="center">
     <img src="/2023/07/23/Vue2源码：计算属性原理/photo1.png" style="height: 250px; width: 500px;">
 </div>
+**所以，首先会执行 computed watcher 的 update()** 
 
-<p><strong>所以，首先会执行 computed watcher</strong> </p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">update</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">lazy</span>) &#123;</span><br><span class="line">      <span class="comment">// 将 dirty 标记为脏数据</span></span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">dirty</span> = <span class="literal">true</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">sync</span>) &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="title function_">run</span>()</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="title function_">queueWatcher</span>(<span class="variable language_">this</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
 
 <p>属于计算属性watcher， lazy 为 true</p>
@@ -249,7 +262,7 @@
 <p>而<strong>真正的求值操作是在 render watcher 中进行的：</strong></p>
 <p>执行 render watcher 时</p>
 <p>由于视图依赖了 fullName，会触发计算属性重新定义的 getter，执行前面的 createComputedGetter</p>
-<p><strong>由于 dirty 为 true 脏数据</strong>，则会进行求值逻辑：watcher.evaluate()</p>
+<p><strong>由于 dirty 为 true 脏数据</strong>，则会进行求值逻辑：<strong>computed watcher 的 watcher.evaluate()</strong></p>
 <p>此时 fullName 就拿到了最新的值了</p>
 <h2 id="3-3-非依赖的属性发生变化"><a href="#3-3-非依赖的属性发生变化" class="headerlink" title="3.3 非依赖的属性发生变化"></a>3.3 非依赖的属性发生变化</h2><p>如果我修改的是与 fullname 无关的属性</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vm.<span class="property">otherTimes</span> = <span class="string">&#x27;新值&#x27;</span>;</span><br></pre></td></tr></table></figure>
@@ -258,6 +271,9 @@
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">lazy</span>) &#123;</span><br><span class="line">  <span class="comment">// 将 dirty 标记为脏数据</span></span><br><span class="line">  <span class="variable language_">this</span>.<span class="property">dirty</span> = <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>因为 dirty 为 false，所以 fullname 不会重新执行计算新值的方法：watcher.evaluate()</p>
+<h1 id="4-流程图"><a href="#4-流程图" class="headerlink" title="4 流程图"></a>4 流程图</h1><div align="center">
+    <img src="/2023/07/23/Vue2源码：计算属性原理/process.jpg" style="height: 1300px; width: 800px;">
+</div>
 
     </div>
 
