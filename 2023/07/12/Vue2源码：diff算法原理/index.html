@@ -190,57 +190,48 @@
 <li>旧虚拟 DOM 少子节点，则新增</li>
 <li>都有子节点，进行 updateChildren() 比较两个人的子节点</li>
 </ul>
-<h1 id="4-updateChildren-diff-核心方法"><a href="#4-updateChildren-diff-核心方法" class="headerlink" title="4 updateChildren() - diff 核心方法"></a>4 updateChildren() - diff 核心方法</h1><p><code>updateChildren</code> 是核心，采用双指针的方式，比较<strong>旧虚拟 DOM</strong> 和<strong>新虚拟 DOM</strong> 的<strong>子节点</strong>，尽量复用旧虚拟 DOM </p>
-<p><strong>while 循环：</strong></p>
-<p>因为循环过程中有<strong>两个指针</strong>指向新、旧DOM，因此while循环条件是当前遍历的index没有越界</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (oldStartIdx &lt;= oldEndIdx &amp;&amp; newStartIdx &lt;= newEndIdx)</span><br></pre></td></tr></table></figure>
-
-<p><strong>头头比较：</strong></p>
+<h1 id="4-updateChildren-diff-核心方法"><a href="#4-updateChildren-diff-核心方法" class="headerlink" title="4 updateChildren() - diff 核心方法"></a>4 updateChildren() - diff 核心方法</h1><p>vue2 中叫做双端交叉指针，新老Vdom各有两个指针，分别是：队头与队头，队尾与队尾、队头与队尾、队尾与队头。</p>
+<p>它会对比4次，如果说四次中寻找到的元素相同，就会去进行复用，移动元素的位置。</p>
+<p>如果这四种情况都没有匹配到，就会从新Vdom的队头开始，在旧Vdom开始寻找，找到了就该节点移动到对应位置，并将旧Vdom中该节点设置为undefined，如果没找到，就创建新节点插入</p>
+<p><strong>队头与队头比较：</strong></p>
 <ul>
-<li>指针指向：<strong>oldStartVnode, newStartVnode</strong></li>
-<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
-<li>调用 patchVnode() 递归比较</li>
-<li>index++</li>
+<li>指针指向：<strong>旧Vdom的队头、新Vdom的队头</strong></li>
+<li>节点相同，则复用，递归比较，然后index++，继续向右对比</li>
+<li>到结尾，如果新Vdom中有剩余的节点，则在<strong>后面</strong>创建新节点</li>
 </ul>
 <div align="center">
-    <img src="/2023/07/12/Vue2源码：diff算法原理/头头比较.png" style="height: 550px; width: 600px;">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/头头比较.png" style="height: 350px; width: 500px;">
 </div>
 
-<p><strong>尾尾比较：</strong></p>
+<p><strong>队尾与队尾比较：</strong></p>
 <ul>
-<li>指针指向：<strong>oldEndVnode, newEndVnode</strong></li>
-<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
-<li>调用 patchVnode() 递归比较</li>
-<li>index - -</li>
+<li>指针指向：<strong>旧Vdom的队尾、新Vdom的队尾</strong></li>
+<li>节点相同，则复用，递归比较，然后index–</li>
+<li>新Vdom中有剩余的节点，则在<strong>前面</strong>创建新节点</li>
 </ul>
 <div align="center">
-    <img src="/2023/07/12/Vue2源码：diff算法原理/尾尾比较.png" style="height: 550px; width: 760px;">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/尾尾比较.png" style="height: 350px; width: 500px;">
 </div>
 
-<p><strong>头尾比较：</strong></p>
+<p><strong>队头与队尾比较：</strong></p>
 <ul>
-<li>指针指向：<strong>oldStartVnode, newEndVnode</strong></li>
-<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
-<li>调用 patchVnode() 递归比较</li>
-<li>旧节点 index++   新节点 index–</li>
+<li>指针指向：<strong>旧Vdom的队头、新Vdom的队尾</strong></li>
+<li>节点相同，则复用，递归比较，将该节点移动到结尾，index移动</li>
 </ul>
 <div align="center">
-    <img src="/2023/07/12/Vue2源码：diff算法原理/头尾比较.png" style="height: 350px; width: 760px;">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/头尾比较.png" style="height: 350px; width: 500px;">
 </div>
 
-<p><strong>尾头比较：</strong></p>
+<p><strong>队尾与队头比较：</strong></p>
 <ul>
-<li>指针指向：<strong>oldEndVnode, newStartVnode</strong></li>
-<li>sameVnode() 方法比较他们是否是相同节点，为 true 才会进行下面</li>
-<li>调用 patchVnode() 递归比较</li>
-<li>旧节点 index–   新节点 index++</li>
+<li>指针指向：<strong>旧Vdom的队尾、新Vdom的队头</strong></li>
+<li>节点相同，则复用，递归比较，将该节点移动到开头，index移动</li>
 </ul>
-<p><strong>乱序比较：</strong></p>
-<p>根据老的索引和key做一个映射关系 </p>
-<p>根据新虚拟节点的去寻找</p>
-<p>找到则移动到前面（移动过的标识为undefined）</p>
-<p>找不到则添加</p>
-<p>最后多余的就删除</p>
+<div align="center">
+    <img src="/2023/07/12/Vue2源码：diff算法原理/尾头对比.png" style="height: 350px; width: 500px;">
+</div>
+
+<p>如果这四种情况都没有匹配到，就会从新Vdom的队头开始，在旧Vdom开始寻找，找到了就该节点移动到对应位置，并将旧Vdom中该节点设置为undefined，如果没找到，就创建新节点插入</p>
 <p><strong>跳出while循环</strong></p>
 <p>如果旧节点没有，新节点有</p>
 <p>就要把多余的节点就插入到老的</p>
