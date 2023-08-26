@@ -231,6 +231,11 @@
 <div align="center">
     <img src="/2023/07/06/渲染性能优化：懒加载-异步解码/loading兼容.png" style="height: 300px; width: 900px;">
 </div>
+也可以通过以下方法检测浏览器是否支持 loading="lazy" 
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var isSupportLoading = &#x27;loading&#x27; in document.createElement(&#x27;img&#x27;);</span><br></pre></td></tr></table></figure>
+
+
 
 <h2 id="2-2-异步解码-decoding-x3D-”async”"><a href="#2-2-异步解码-decoding-x3D-”async”" class="headerlink" title="2.2 异步解码 decoding&#x3D;”async”"></a>2.2 异步解码 decoding&#x3D;”async”</h2><p><code>HTMLImageElement</code> 接口的 <code>decoding</code> 属性用于告诉浏览器使用何种方式解析图像数据。</p>
 <ul>

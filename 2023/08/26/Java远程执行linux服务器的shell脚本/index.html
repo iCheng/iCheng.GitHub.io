@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    
+      <title>
+        
+          Java远程执行linux服务器的shell脚本 - 
+              iCheng
+      </title>
+      
+        <link rel="shortcut icon" href="/theme-img/logo.png">
+          
+            
+              <link rel='manifest' href='/manifest.json'>
+              
+
+                
+                  
+                    
+                      <meta property="og:title" content="Java远程执行linux服务器的shell脚本 - iCheng" />
+                      
+                      <meta property="og:type" content="article" />
+                      
+                      <meta property="og:url" content="http://example.com/2023/08/26/Java%E8%BF%9C%E7%A8%8B%E6%89%A7%E8%A1%8Clinux%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84shell%E8%84%9A%E6%9C%AC/index.html" />
+                      
+                      <meta property="og:image" content="/favicon.png" />
+                      
+                      <meta property="og:article:published_time" content="2023-08-26T01:19:42.000Z" />
+                      
+                      <meta property="og:article:author" content="Duan WeiCheng" />
+                      
+                        
+
+                          
+<link rel="stylesheet" href="/css/var.css">
+
+                            
+<link rel="stylesheet" href="/css/main.css">
+
+                              
+<link rel="stylesheet" href="/css/typography.css">
+
+                                
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+                                  
+<link rel="stylesheet" href="/css/components.css">
+
+                                    
+<link rel="stylesheet" href="/css/nav.css">
+
+                                      
+<link rel="stylesheet" href="/css/paginator.css">
+
+                                        
+<link rel="stylesheet" href="/css/footer.css">
+
+                                          
+<link rel="stylesheet" href="/css/post-list.css">
+
+                                            
+                                              
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+                                                
+                                                  
+                                                    
+<link rel="stylesheet" href="/css/toc.css">
+
+                                                      
+                                                        
+                                                          
+<link rel="stylesheet" href="/css/giscus.css">
+
+                                                            
+                                                              
+                                                                    
+                                                                      
+<link rel="stylesheet" href="/css/post.css">
+
+                                                                        
+                                                                          
+                                                                                
+                                                                                      
+                                                                                            
+
+                                                                                                  
+                                                                                                      <meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+        <div class="categories text-uppercase">
+        
+            <a href="/categories/Java/">Java</a>
+        
+        </div>
+        
+
+        
+        <div class="date" id="date">
+            <span>August</span>
+            <span>26,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">Java远程执行linux服务器的shell脚本</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <p><strong>之前有一个业务需求：</strong></p>
+<p>有一个 Flink 任务代码是动态生成的，新任务生成后，提交到目标服务器集群，启动新任务，读取对应数据流</p>
+<p>所以要能够将这个动态文件打为 jar 包，传输到目标服务器，并提交 jar 包到集群</p>
+<p><strong>整体流程：</strong></p>
+<p>写 3 个脚本:</p>
+<ul>
+<li>bat脚本：位于本地 SpringBoot 项目中，只需执行打 jar 包的命令</li>
+<li>bat脚本：位于本地 SpringBoot 项目中，将 jar 包传输到目标服务器</li>
+<li>shell脚本：位于目标服务器上，提交 jar 包任务</li>
+</ul>
+<p>第一个脚本 Java 可以直接调用，后面两个脚本，需要和远程服务器建立ssh链接，再调用指定的脚本</p>
+<h1 id="1-脚本文件"><a href="#1-脚本文件" class="headerlink" title="1 脚本文件"></a>1 脚本文件</h1><h2 id="1-1-打-jar-包"><a href="#1-1-打-jar-包" class="headerlink" title="1.1 打 jar 包"></a>1.1 打 jar 包</h2><p>命名为 .bat 文件，放在项目根目录下</p>
+<p>执行时会进行打包</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">@echo off</span><br><span class="line"></span><br><span class="line">echo ==========================start to install all modules===============================</span><br><span class="line"></span><br><span class="line">if not exist &quot;%M2_HOME%\bin\mvn.cmd&quot; echo Please set the M2_HOME variable in your environment,We need maven! &amp; EXIT /B 2</span><br><span class="line"></span><br><span class="line">set SERVER=common-starter eureka-server config-server device-demo message-system report-system udp-server</span><br><span class="line"></span><br><span class="line">cd %~dp0</span><br><span class="line"></span><br><span class="line">do (</span><br><span class="line">    call mvn clean package</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">timeout /T 3 /NOBREAK</span><br><span class="line"></span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+
+<h2 id="1-2-jar-包传输"><a href="#1-2-jar-包传输" class="headerlink" title="1.2 jar 包传输"></a>1.2 jar 包传输</h2><blockquote>
+<p>需要将打好的jar包 从本地上传至 linux 服务器的目标目录下</p>
+</blockquote>
+<p>在此之前需配置ssh无密码登录</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">打开 windows powershell:</span><br><span class="line">执行生成密钥ssh-keygen的命令：</span><br><span class="line">ssh-keygen -t rsa</span><br><span class="line">遇到输入一路回车，返回生成秘钥的位置：回车回车回车</span><br><span class="line">上传秘钥到远端服务器：</span><br><span class="line">cat ~/.ssh/id_*.pub | ssh  root@hadoop102 &#x27;cat &gt;&gt; .ssh/authorized_keys&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>创建  .bat 文件，执行该脚本会将对应文件移动到对应地址</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">echo 连接远程服务器</span><br><span class="line">scp -r jar包地址  root@hadoop102:/opt/XXX/XXX（目标地址目录）</span><br><span class="line">exit</span><br></pre></td></tr></table></figure>
+
+<h2 id="1-3-提交任务到集群"><a href="#1-3-提交任务到集群" class="headerlink" title="1.3 提交任务到集群"></a>1.3 提交任务到集群</h2><p>当前 jar 包存在服务器目录下，在确认启动了集群后</p>
+<p>创建 shell 脚本，执行该脚本会将 jar 包任务提交到 Flink 集群</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line">case $1 in</span><br><span class="line"> &quot;start&quot;)&#123;</span><br><span class="line"> for i in hadoop102</span><br><span class="line"> do</span><br><span class="line">  echo &quot;========== $i ==========&quot;</span><br><span class="line">  ssh $i &quot;/opt/Environment_DataLake/flink-1.13.3/bin/flink run -m hadoop102:8081 -c com.dwc.test.motor /opt/Environment_DataLake/flink-1.13.3/job/DataToLake-1.0-SNAPSHOT.jar&quot;</span><br><span class="line"> done</span><br><span class="line">&#125;;;</span><br><span class="line">esac</span><br></pre></td></tr></table></figure>
+
+<h1 id="2-Java调用脚本"><a href="#2-Java调用脚本" class="headerlink" title="2 Java调用脚本"></a>2 Java调用脚本</h1><h2 id="2-1-调用本地的脚本"><a href="#2-1-调用本地的脚本" class="headerlink" title="2.1 调用本地的脚本"></a>2.1 调用本地的脚本</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.BufferedReader;</span><br><span class="line"><span class="keyword">import</span> java.io.File;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStreamReader;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Author</span> dwc</span></span><br><span class="line"><span class="comment"> * .bat脚本启动</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">startbat</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="comment">// TODO Auto-generated method stub</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">batPath</span> <span class="operator">=</span> <span class="string">&quot;XXX.bat&quot;</span>; <span class="comment">// 第一个bat脚本路径</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">batPath2</span> <span class="operator">=</span><span class="string">&quot;XXXX.bat&quot;</span>;  <span class="comment">// 第二个bat脚本路径</span></span><br><span class="line">        <span class="type">File</span> <span class="variable">batFile</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">File</span>(batPath);</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">batFileExist</span> <span class="operator">=</span> batFile.exists();</span><br><span class="line">        System.out.println(<span class="string">&quot;batFileExist:&quot;</span> + batFileExist);</span><br><span class="line">        <span class="keyword">if</span> (batFileExist) &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;😊😊😊😊😊😊😊😊😊😊😊😊😊正在执行编译😊😊😊😊😊😊😊😊😊😊😊😊😊&quot;</span>);</span><br><span class="line">            callCmd(batPath);</span><br><span class="line">            System.out.println(<span class="string">&quot;😊😊😊😊😊😊😊😊😊😊😊😊😊正在上传至linux系统😊😊😊😊😊😊😊😊😊😊😊😊😊&quot;</span>);</span><br><span class="line">            callCmd(batPath2);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;😊😊😊😊😊😊😊😊😊😊😊😊😊bat脚本运行完成😊😊😊😊😊😊😊😊😊😊😊😊😊&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span>  <span class="title function_">callCmd</span><span class="params">(String locationCmd)</span>&#123;</span><br><span class="line">        <span class="type">StringBuilder</span> <span class="variable">sb</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">Process</span> <span class="variable">child</span> <span class="operator">=</span> Runtime.getRuntime().exec(locationCmd);</span><br><span class="line">            <span class="type">InputStream</span> <span class="variable">in</span> <span class="operator">=</span> child.getInputStream();</span><br><span class="line">            BufferedReader bufferedReader=<span class="keyword">new</span> <span class="title class_">BufferedReader</span>(<span class="keyword">new</span> <span class="title class_">InputStreamReader</span>(in));</span><br><span class="line">            String line;</span><br><span class="line">            <span class="keyword">while</span>((line=bufferedReader.readLine())!=<span class="literal">null</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                sb.append(line + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            in.close();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                child.waitFor();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                System.out.println(e);</span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(<span class="string">&quot;sb:&quot;</span> + sb.toString());</span><br><span class="line">            System.out.println(<span class="string">&quot;callCmd execute finished&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            System.out.println(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-2-调用远程linux脚本"><a href="#2-2-调用远程linux脚本" class="headerlink" title="2.2 调用远程linux脚本"></a>2.2 调用远程linux脚本</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> ch.ethz.ssh2.Connection;</span><br><span class="line"><span class="keyword">import</span> ch.ethz.ssh2.Session;</span><br><span class="line"><span class="keyword">import</span> ch.ethz.ssh2.StreamGobbler;</span><br><span class="line"><span class="keyword">import</span> org.apache.commons.lang3.StringUtils;</span><br><span class="line"><span class="keyword">import</span> org.apache.flink.calcite.shaded.org.apache.commons.io.IOUtils;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@Author</span> dwc</span></span><br><span class="line"><span class="comment"> * 远程执行linux的shell script</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RemoteExecuteCommand</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">linuxIP</span> <span class="operator">=</span> <span class="string">&quot;ip地址&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">usrName</span> <span class="operator">=</span> <span class="string">&quot;用户名&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">passwd</span>  <span class="operator">=</span> <span class="string">&quot;密码&quot;</span>;</span><br><span class="line">        <span class="type">RemoteExecuteCommand</span> <span class="variable">rec</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">RemoteExecuteCommand</span>(linuxIP, usrName, passwd);</span><br><span class="line"></span><br><span class="line">        System.out.println(<span class="string">&quot;😊😊😊😊😊😊😊😊😊😊😊😊😊正在上传任务至集群😊😊😊😊😊😊😊😊😊😊😊😊😊&quot;</span>);</span><br><span class="line">        <span class="comment">// 执行脚本</span></span><br><span class="line">        System.out.println(rec.execute(<span class="string">&quot;XXX.shell&quot;</span>));  <span class="comment">//shell脚本地址</span></span><br><span class="line">        <span class="comment">// 执行命令</span></span><br><span class="line">        System.out.println(rec.execute(<span class="string">&quot;jps&quot;</span>));</span><br><span class="line">        System.out.println(<span class="string">&quot;😊😊😊😊😊😊😊😊😊😊😊😊😊job上传完成😊😊😊😊😊😊😊😊😊😊😊😊😊&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 字符编码默认是utf-8</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="type">String</span> <span class="variable">DEFAULTCHART</span> <span class="operator">=</span> <span class="string">&quot;UTF-8&quot;</span>;</span><br><span class="line">    <span class="keyword">private</span> Connection conn;</span><br><span class="line">    <span class="keyword">private</span> String ip;</span><br><span class="line">    <span class="keyword">private</span> String userName;</span><br><span class="line">    <span class="keyword">private</span> String userPwd;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">RemoteExecuteCommand</span><span class="params">(String ip, String userName, String userPwd)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.ip = ip;</span><br><span class="line">        <span class="built_in">this</span>.userName = userName;</span><br><span class="line">        <span class="built_in">this</span>.userPwd = userPwd;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 远程登录linux主机</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@since</span> V0.1</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> 登录成功返回true，否则返回false</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Exception</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> Boolean <span class="title function_">login</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">flg</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            conn = <span class="keyword">new</span> <span class="title class_">Connection</span>(ip);</span><br><span class="line">            <span class="comment">// 连接</span></span><br><span class="line">            conn.connect();</span><br><span class="line">            <span class="comment">// 认证</span></span><br><span class="line">            flg = conn.authenticateWithPassword(userName, userPwd);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(<span class="string">&quot;远程连接服务器失败&quot;</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> flg;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 远程执行shll脚本或者命令</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> cmd 即将执行的命令</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> 命令执行完后返回的结果值</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Exception</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@since</span> V0.1</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">execute</span><span class="params">(String cmd)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">        <span class="type">Session</span> <span class="variable">session</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (login()) &#123;</span><br><span class="line">                <span class="comment">// 打开一个会话</span></span><br><span class="line">                session = conn.openSession();</span><br><span class="line">                <span class="comment">// 执行命令</span></span><br><span class="line">                session.execCommand(cmd);</span><br><span class="line">                result = processStdout(session.getStdout(), DEFAULTCHART);</span><br><span class="line">                <span class="comment">// 如果为输出为空，说明脚本执行出错了</span></span><br><span class="line">                <span class="keyword">if</span> (StringUtils.isBlank(result)) &#123;</span><br><span class="line">                    result = processStdout(session.getStderr(), DEFAULTCHART);</span><br><span class="line">                &#125;</span><br><span class="line">                conn.close();</span><br><span class="line">                session.close();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(<span class="string">&quot;命令执行失败&quot;</span>, e);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (conn != <span class="literal">null</span>) &#123;</span><br><span class="line">                conn.close();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (session != <span class="literal">null</span>) &#123;</span><br><span class="line">                session.close();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 解析脚本执行返回的结果集</span></span><br><span class="line"><span class="comment">     *</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> in 输入流对象</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> charset 编码</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@since</span> V0.1</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span> 以纯文本的格式返回</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throws</span> Exception</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> String <span class="title function_">processStdout</span><span class="params">(InputStream in, String charset)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">InputStream</span> <span class="variable">stdout</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StreamGobbler</span>(in);</span><br><span class="line">        <span class="type">StringBuffer</span> <span class="variable">buffer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuffer</span>();</span><br><span class="line">        <span class="type">InputStreamReader</span> <span class="variable">isr</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="type">BufferedReader</span> <span class="variable">br</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            isr = <span class="keyword">new</span> <span class="title class_">InputStreamReader</span>(stdout, charset);</span><br><span class="line">            br = <span class="keyword">new</span> <span class="title class_">BufferedReader</span>(isr);</span><br><span class="line">            <span class="type">String</span> <span class="variable">line</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">            <span class="keyword">while</span> ((line = br.readLine()) != <span class="literal">null</span>) &#123;</span><br><span class="line">                buffer.append(line + <span class="string">&quot;\n&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (UnsupportedEncodingException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(<span class="string">&quot;不支持的编码字符集异常&quot;</span>, e);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(<span class="string">&quot;读取失败&quot;</span>, e);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            IOUtils.close(br);</span><br><span class="line">            IOUtils.close(isr);</span><br><span class="line">            IOUtils.close(stdout);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> buffer.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/08/10/Vue%E8%BD%ACReact%E6%8C%87%E5%8D%97/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">Vue 转 React 指南</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+  <div class="inner">
+    <div class="links">
+      
+        <div class="group">
+          <h2 class="title">
+            Blog
+          </h2>
+          
+            <a href="/" class="item">
+              Blog
+            </a>
+            
+            <a href="/archives" class="item">
+              Archives
+            </a>
+            
+            <a href="/tags" class="item">
+              Tags
+            </a>
+            
+            <a href="/categories" class="item">
+              Categories
+            </a>
+            
+            <a href="/search" class="item">
+              Search
+            </a>
+            
+            <a href="/friends" class="item">
+              Friends
+            </a>
+            
+            <a href="/about" class="item">
+              About
+            </a>
+            
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Projects
+          </h2>
+          
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Me
+          </h2>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">
+              GitHub
+            </a>
+            
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">
+              CSDN
+            </a>
+            
+        </div>
+        
+    </div>
+    <span>&copy; 2023
+        Duan WeiCheng
+          <!-- Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> -->
+    </span>
+    
+        
+          <br>
+          <div style="margin-top: 15px; color: #06c;">
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <span id="busuanzi_container_site_pv">访问量 <span id="busuanzi_value_site_pv"></span> 次</span>
+          </div>
+          <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+            <label>
+              <input type="radio" value="light">
+              <span>Light</span>
+            </label>
+            <label>
+              <input type="radio" value="dark">
+              <span>Dark</span>
+            </label>
+            <label>
+              <input type="radio" value="auto">
+              <span>Auto</span>
+            </label>
+          </div>
+          
+  </div>
+</footer>
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>
