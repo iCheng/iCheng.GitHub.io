@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head prefix="og: https://ogp.me/ns#">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    
+      <title>
+        
+          虚拟 DOM 的性能到底如何 - 
+              iCheng
+      </title>
+      
+        <link rel="shortcut icon" href="/theme-img/logo.png">
+          
+            
+              <link rel='manifest' href='/manifest.json'>
+              
+
+                
+                  
+                    
+                      <meta property="og:title" content="虚拟 DOM 的性能到底如何 - iCheng" />
+                      
+                      <meta property="og:type" content="article" />
+                      
+                      <meta property="og:url" content="http://example.com/2023/09/09/%E8%99%9A%E6%8B%9FDOM%E7%9A%84%E6%80%A7%E8%83%BD%E5%88%B0%E5%BA%95%E5%A6%82%E4%BD%95/index.html" />
+                      
+                      <meta property="og:image" content="/favicon.png" />
+                      
+                      <meta property="og:article:published_time" content="2023-09-09T14:42:14.000Z" />
+                      
+                      <meta property="og:article:author" content="Duan WeiCheng" />
+                      
+                        
+
+                          
+<link rel="stylesheet" href="/css/var.css">
+
+                            
+<link rel="stylesheet" href="/css/main.css">
+
+                              
+<link rel="stylesheet" href="/css/typography.css">
+
+                                
+<link rel="stylesheet" href="/css/code-highlighting.css">
+
+                                  
+<link rel="stylesheet" href="/css/components.css">
+
+                                    
+<link rel="stylesheet" href="/css/nav.css">
+
+                                      
+<link rel="stylesheet" href="/css/paginator.css">
+
+                                        
+<link rel="stylesheet" href="/css/footer.css">
+
+                                          
+<link rel="stylesheet" href="/css/post-list.css">
+
+                                            
+                                              
+<link rel="stylesheet" href="/css/rainbow-banner.css">
+
+                                                
+                                                  
+                                                    
+<link rel="stylesheet" href="/css/toc.css">
+
+                                                      
+                                                        
+                                                          
+<link rel="stylesheet" href="/css/giscus.css">
+
+                                                            
+                                                              
+                                                                    
+                                                                      
+<link rel="stylesheet" href="/css/post.css">
+
+                                                                        
+                                                                          
+                                                                                
+                                                                                      
+                                                                                            
+
+                                                                                                  
+                                                                                                      <meta name="generator" content="Hexo 6.3.0"></head>
+
+  <body data-color-scheme="light" data-uppercase-categories="true" 
+    data-rainbow-banner="true"
+      data-rainbow-banner-shown="auto"
+        data-rainbow-banner-month="6"
+          data-rainbow-banner-colors="#e50000,#ff8d00,#ffee00,#008121,#004cff,#760188"
+            
+              data-config-root="/"
+                
+                  data-toc="true"
+                    data-toc-max-depth="2"
+                      
+                        
+                              >
+                              <nav id="theme-nav">
+    <div class="inner">
+        <a class="title" href="/">iCheng</a>
+        <div class="nav-arrow"></div>
+        <div class="nav-items">
+            <a class="nav-item nav-item-home" href="/">Home</a>
+            
+            
+            <a class="nav-item" href="/archives">Archives</a>
+            
+            
+            
+            <a class="nav-item" href="/categories">Categories</a>
+            
+            
+            
+            <a class="nav-item" href="/about">About</a>
+            
+            
+            
+            <a class="nav-item nav-item-github nav-item-icon" href="https://github.com/iCheng" target="_blank" aria-label="GitHub">&nbsp;</a>
+            
+            
+            
+            <a class="nav-item nav-item-search nav-item-icon" href="/search" target="_blank" aria-label="Search">&nbsp;</a>
+            
+            
+        </div>
+    </div>
+</nav>
+                                
+<article class="post">
+    <div class="meta">
+        
+
+        
+        <div class="date" id="date">
+            <span>September</span>
+            <span>9,</span>
+            <span>2023</span>
+        </div>
+        
+
+        <h2 class="title">虚拟 DOM 的性能到底如何</h2>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="content">
+        <h1 id="虚拟-DOM-的性能到底如何"><a href="#虚拟-DOM-的性能到底如何" class="headerlink" title="虚拟 DOM 的性能到底如何"></a>虚拟 DOM 的性能到底如何</h1><p>讨论虚拟 DOM 之前，需要了解 <strong>命令式和声明式</strong> 代码</p>
+<h1 id="1-命令式和声明式"><a href="#1-命令式和声明式" class="headerlink" title="1 命令式和声明式"></a>1 命令式和声明式</h1><p>前端开发中，存在两种代码方式：</p>
+<ul>
+<li>命令式</li>
+<li>声明式</li>
+</ul>
+<h2 id="1-1-命令式"><a href="#1-1-命令式" class="headerlink" title="1.1 命令式"></a>1.1 命令式</h2><p>命令是的一大特点就是，<strong>关注过程</strong></p>
+<p>例如，我现在要为 div 设置文本内容，并添加点击事件</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">const div = document.getElementById(&#x27;container&#x27;);   // 获取 Dom</span><br><span class="line">div.innerText = &#x27;New Word&#x27;;</span><br><span class="line">div.addEventListener(&#x27;click&#x27;, () =&gt; &#123;console.log(&#x27;触发了点击事件&#x27;)&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，使用原生 JS，关注于一步一步的过程：</p>
+<ul>
+<li>拿到 div</li>
+<li>修改 innerText</li>
+<li>为元素添加事件监听</li>
+</ul>
+<h2 id="1-2-声明式"><a href="#1-2-声明式" class="headerlink" title="1.2 声明式"></a>1.2 声明式</h2><p>而声明式的特点是，<strong>关注结果</strong></p>
+<p>结合 Vue ，来实现上面的功能</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;div @click=&quot;() =&gt; &#123;console.log(&#x27;触发了点击事件&#x27;)&#125;&quot;&gt; New Word &lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这种代码，不关心具体是怎样实现的，不需要获取 Dom 来做进一步的操作，我们只关心结果</p>
+<p>相当于告诉 Vue：”帮我给 div 节点加上文本内容，添加上点击事件“</p>
+<p>而具体的过程，是 Vue 封装好</p>
+<p>所以：<strong>Vue 暴漏给用户的是 声明式，内部是 命令式</strong></p>
+<h2 id="1-3-命令式和声明式的优缺点"><a href="#1-3-命令式和声明式的优缺点" class="headerlink" title="1.3 命令式和声明式的优缺点"></a>1.3 命令式和声明式的优缺点</h2><p>在复杂页面开发的情况下，相比于声明式，命令式显然书写相对繁琐一点。显然使用声明式代码可维护性较强一些。</p>
+<p>那么命令式和声明式的性能谁更优呢？</p>
+<p><strong>声明式代码的性能不一定优于命令式代码的性能</strong></p>
+<p>例如上面的示例：</p>
+<p>命令式代码，直接使用命令操作，修改文本内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">div.innerText = &#x27;New Word&#x27;;  // 直接修改</span><br></pre></td></tr></table></figure>
+
+<p>声明式代码：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 之前： --&gt;</span><br><span class="line">&lt;div&gt; 旧文本 &lt;/div&gt;</span><br><span class="line">&lt;!-- 之后： --&gt;</span><br><span class="line">&lt;div&gt; New Word &lt;/div&gt;</span><br></pre></td></tr></table></figure>
+
+<p>使用声明式代码，其实框架需要找到前后的差异，只更新变化的地方，然后执行 <code>div.innerText = &#39;New Word&#39;;</code> 进行修改，完成修改文本内容</p>
+<p>如果将修改的性能消耗定义为 A，把找出差异的性能消耗定义为 B，可以得出如下：</p>
+<ul>
+<li><strong>命令式代码的更新性能消耗 &#x3D; A</strong></li>
+<li><strong>声明式代码的更新性能消耗 &#x3D; A + B</strong></li>
+</ul>
+<p>这符合前面提到的：声明式代码的性能不一定优于命令式代码的性能</p>
+<p>但是如果能将 B 的性能消耗降低，无限接近 0，声明式和命令式的性能消耗就能相等</p>
+<p>而能够降低性能 B 的方式，就是虚拟 DOM 了</p>
+<p><strong>所谓的虚拟 DOM，就是最小化找出差异的性能消耗，使声明式代码性能消耗 接近 命令式代码的性能消耗。</strong></p>
+<h1 id="2-虚拟-DOM-创建页面的性能消耗"><a href="#2-虚拟-DOM-创建页面的性能消耗" class="headerlink" title="2 虚拟 DOM 创建页面的性能消耗"></a>2 虚拟 DOM 创建页面的性能消耗</h1><p>为了比较虚拟 DOM 的性能</p>
+<p>需要了解其创建、更新的过程</p>
+<p>我们都知道，虚拟 DOM 实际上是 JS 对象，所以：</p>
+<p>虚拟 DOM 创建页面的效率 &#x3D; 创建 JS 对象的效率 + 新建所有 DOM 元素的效率</p>
+<p>[图片]</p>
+<p>为了比较纯 JS 层面的计算消耗，这里使用JavaScript 代码执行效率对比工具进行测试</p>
+<blockquote>
+<p>github：<a target="_blank" rel="noopener" href="https://github.com/barretlee/performance">https://github.com/barretlee/performance</a></p>
+</blockquote>
+<p>[图片]</p>
+<p>上面是纯 JS 层面的计算，模拟创建虚拟 DOM，循环 1000 次</p>
+<p>下面则是 DOM 操作，循环 1000 次，每创建一个对象，作为子节点插入</p>
+<p>根据 Relative Rate，纯 JS 层面的计算的效率要<strong>远远高于</strong>DOM 操作</p>
+<p><strong>从宏观上来看，则认为 虚拟 DOM 创建页面的效率 和 直接采用真实 DOM ，是没有差异的</strong></p>
+<h1 id="2-虚拟-DOM-更新页面的性能消耗"><a href="#2-虚拟-DOM-更新页面的性能消耗" class="headerlink" title="2 虚拟 DOM 更新页面的性能消耗"></a>2 虚拟 DOM 更新页面的性能消耗</h1><p>上面讨论了虚拟 DOM 创建页面时的性能情况，或许可以认为和直接操作真实DOM没有差异，甚至深究下，虚拟 DOM 的性能更差</p>
+<p>但是在更新界面的情况下，性能的提升就明显了</p>
+<p>如果我们使用 innerHtml 更新界面</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">div.innerHTML = &#x27;New Word&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>其过程是，重新构建 HTML 字符串，再重新设置 DOM 元素的 innerHTML 的属性</p>
+<p><strong>也就是：那么我们只改了一个字，也要销毁所有旧的 DOM 元素，再全量创建新的 DOM 元素</strong></p>
+<p>而虚拟 DOM 更新页面得过程：</p>
+<p>它需要重新构建 JS 对象（虚拟DOM），通过 diff 算法，寻找差异，复用旧 DOM，只找到更新的元素进行修改</p>
+<p>[图片]</p>
+<p>即使虚拟 DOM 多出 构建 JS 对象（虚拟DOM），通过 diff 算法的两个步骤</p>
+<p>但他们都是 纯 JS 层面的计算，经过上面的测试，不会产生数量级的消耗</p>
+<p>再观察 DOM 层面的消耗</p>
+<p>虚拟 DOM 仅更新必要的元素</p>
+<p>但 innerHTML 需要全量更新，页面内容越多，性能消耗越大</p>
+<p>这时虚拟 DOM 的优势就体现出来了</p>
+<h1 id="3-总结"><a href="#3-总结" class="headerlink" title="3 总结"></a>3 总结</h1><p>根据命令式和声明式代码的原理，我们能得知：</p>
+<p><strong>声明式代码的更新性能消耗 &#x3D; 修改的性能消耗定义 + 找出差异的性能消耗</strong></p>
+<p>可以认为虚拟 DOM 能够使<strong>声明式代码性能消耗 接近 命令式代码的性能消耗</strong></p>
+<p>经过测试纯 JS 层面计算消耗和 DOM 层面的计算消耗，能确定在宏观角度上，虚拟 DOM 在创建页面的消耗差异不大，在更新界面的情况下，如果页面内容越多，获得的性能提升也会更好</p>
+<p>同时，纯 JS 层面的少量计算消耗，与获得较好的代码维护性上来看，虚拟 DOM 是一个不错的选择</p>
+<blockquote>
+<p>参考：《vue.js设计与实现》霍春阳 著作</p>
+</blockquote>
+
+    </div>
+
+    
+    <div class="about">
+        <h1>About this Post</h1>
+        <div class="details">
+            <p>This post is written by Duan WeiCheng, licensed under <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc/4.0">CC BY-NC 4.0</a>.</p>
+        </div>
+        
+        <p class="tags">
+            
+            <i class="icon"></i>
+            <a href="/tags/一点小想法/" class="tag">#一点小想法</a>
+        </p>
+        
+    </div>
+    
+
+    <div class="container post-prev-next">
+        <a class="next"></a>
+        
+        <a href="/2023/08/26/Java%E8%BF%9C%E7%A8%8B%E6%89%A7%E8%A1%8Clinux%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84shell%E8%84%9A%E6%9C%AC/" class="prev">
+            <div>
+                <div class="text">
+                    <p class="label">Previous</p>
+                    <h3 class="title">Java远程执行linux服务器的shell脚本</>
+                </div>
+            </div>
+        </a>
+        
+    </div>
+
+    
+        
+        
+        <script src="https://giscus.app/client.js" data-repo="iCheng/iCheng.github.io" data-repo-id="R_kgDOJ4MJ0g" data-category="General" data-category-id="DIC_kwDOJ4MJ0s4CXwBh" data-mapping="title" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="top" data-theme="light" data-lang="zh-CN" data-loading="lazy" crossorigin="anonymous" async> </script>
+        
+    
+</article>
+
+                                  <footer>
+  <div class="inner">
+    <div class="links">
+      
+        <div class="group">
+          <h2 class="title">
+            Blog
+          </h2>
+          
+            <a href="/" class="item">
+              Blog
+            </a>
+            
+            <a href="/archives" class="item">
+              Archives
+            </a>
+            
+            <a href="/tags" class="item">
+              Tags
+            </a>
+            
+            <a href="/categories" class="item">
+              Categories
+            </a>
+            
+            <a href="/search" class="item">
+              Search
+            </a>
+            
+            <a href="/friends" class="item">
+              Friends
+            </a>
+            
+            <a href="/about" class="item">
+              About
+            </a>
+            
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Projects
+          </h2>
+          
+        </div>
+        
+        <div class="group">
+          <h2 class="title">
+            Me
+          </h2>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/iCheng" class="item">
+              GitHub
+            </a>
+            
+            <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_52268321?spm=1000.2115.3001.5343" class="item">
+              CSDN
+            </a>
+            
+        </div>
+        
+    </div>
+    <span>&copy; 2023
+        Duan WeiCheng
+          <!-- Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> -->
+    </span>
+    
+        
+          <br>
+          <div style="margin-top: 15px; color: #06c;">
+            <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+            <span id="busuanzi_container_site_pv">访问量 <span id="busuanzi_value_site_pv"></span> 次</span>
+          </div>
+          <div class="color-scheme-toggle" role="radiogroup" id="theme-color-scheme-toggle">
+            <label>
+              <input type="radio" value="light">
+              <span>Light</span>
+            </label>
+            <label>
+              <input type="radio" value="dark">
+              <span>Dark</span>
+            </label>
+            <label>
+              <input type="radio" value="auto">
+              <span>Auto</span>
+            </label>
+          </div>
+          
+  </div>
+</footer>
+
+                                    
+<script src="/js/main.js"></script>
+
+                                      
+                                            
+                                                  
+
+                                                        
+                                                          <script src="https://unpkg.com/scrollreveal"></script>
+                                                          <script>
+                                                            window.addEventListener('load', () => {
+                                                              ScrollReveal({ delay: 250, reset: true, easing: 'cubic-bezier(0, 0, 0, 1)' })
+                                                              ScrollReveal().reveal('.post-list-item .cover-img img')
+                                                              ScrollReveal().reveal('.post-list-item, .card, .content p img, .content .block-large img', { distance: '60px', origin: 'bottom', duration: 800 })
+                                                            })
+                                                          </script>
+                                                          
+                                                            <!-- 扩展语法 -->
+                                                            <script defer
+                                                              src="/js/hexo_relayout_image.js"></script>
+  </body>
+
+</html>
