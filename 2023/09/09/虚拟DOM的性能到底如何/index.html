@@ -206,12 +206,34 @@
 <p>需要了解其创建、更新的过程</p>
 <p>我们都知道，虚拟 DOM 实际上是 JS 对象，所以：</p>
 <p>虚拟 DOM 创建页面的效率 &#x3D; 创建 JS 对象的效率 + 新建所有 DOM 元素的效率</p>
-<p>[图片]</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th>虚拟 DOM 创建页面的效率</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">纯 JS 层面计算</td>
+<td>创建 JS 对象的效率</td>
+</tr>
+<tr>
+<td align="left">DOM 层面计算</td>
+<td>新建所有 DOM 元素的效率</td>
+</tr>
+</tbody></table>
 <p>为了比较纯 JS 层面的计算消耗，这里使用 JavaScript 代码执行效率对比工具进行测试</p>
 <blockquote>
 <p>github：<a target="_blank" rel="noopener" href="https://github.com/barretlee/performance">https://github.com/barretlee/performance</a></p>
 </blockquote>
-<p>[图片]</p>
+<div align="center">
+    <img src="/2023/09/09/虚拟DOM的性能到底如何/test.webp" style="height: 400px; width: 600px;">
+</div>
+
+
+
+
+
 <p>上面是纯 JS 层面的计算，模拟创建虚拟 DOM，循环 1000 次</p>
 <p>下面则是 DOM 操作，循环 1000 次，每创建一个对象，作为子节点插入</p>
 <p>根据 Relative Rate，纯 JS 层面的计算的效率要<strong>远远高于</strong>DOM 操作</p>
@@ -224,8 +246,26 @@
 <p>其过程是，重新构建 HTML 字符串，再重新设置 DOM 元素的 innerHTML 的属性</p>
 <p><strong>也就是：那么我们只改了一个字，也要销毁所有旧的 DOM 元素，再全量创建新的 DOM 元素</strong></p>
 <p>而虚拟 DOM 更新页面得过程：</p>
-<p>它需要重新构建 JS 对象（虚拟DOM），通过 diff 算法，寻找差异，复用旧 DOM，只找到更新的元素进行修改</p>
-<p>[图片]</p>
+<p>它需要重新构建 JS 对象（虚拟DOM），通过 Diff 算法，寻找差异，复用旧 DOM，只找到更新的元素进行修改</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>虚拟 DOM</th>
+<th>innerHTML</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>纯 JS 层面计算</td>
+<td>创建 JS 对象的效率 + Diff</td>
+<td>渲染 HTML 字符串</td>
+</tr>
+<tr>
+<td>DOM 层面计算</td>
+<td>仅更新变化的 DOM</td>
+<td>销毁所有旧 DOM + 新建所有新 DOM</td>
+</tr>
+</tbody></table>
 <p>即使虚拟 DOM 多出 构建 JS 对象（虚拟DOM），通过 diff 算法的两个步骤</p>
 <p>但他们都是 纯 JS 层面的计算，经过上面的测试，不会产生数量级的消耗</p>
 <p>再观察 DOM 层面的消耗</p>
