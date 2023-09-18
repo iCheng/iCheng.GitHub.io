@@ -277,6 +277,17 @@
 </ul>
 </li>
 </ul>
+<h2 id="4-3-如果-patch-时发现-vnode-是组件"><a href="#4-3-如果-patch-时发现-vnode-是组件" class="headerlink" title="4.3 如果 patch() 时发现 vnode 是组件"></a>4.3 如果 patch() 时发现 vnode 是组件</h2><p>当 <code>patch()</code> 方法遇到组件 VNode 时，它会递归的执行：创建或更新组件实例，并进行相应的生命周期钩子函数的调用和组件的渲染更新。</p>
+<p>因此如果我们使用函数式组件， <code>patch()</code> 则不会进行上面的过程，理论上会减少渲染开销</p>
+<blockquote>
+<p>函数式组件是一种定义自身没有任何状态的组件的方式。它们很像纯函数：接收 props，返回 vnodes。函数式组件在渲染过程中不会创建组件实例 (也就是说，没有 <code>this</code>)，也不会触发常规的组件生命周期钩子。</p>
+</blockquote>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">template</span> <span class="attr">functional</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">		.......</span><br><span class="line">	<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">template</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+
+
+
+
 <h1 id="5-面试题"><a href="#5-面试题" class="headerlink" title="5 面试题"></a>5 面试题</h1><h3 id="5-1-面试题：为什么v-for循环时，key不能使用索引？"><a href="#5-1-面试题：为什么v-for循环时，key不能使用索引？" class="headerlink" title="5.1 面试题：为什么v-for循环时，key不能使用索引？"></a>5.1 面试题：为什么v-for循环时，key不能使用索引？</h3><p>如下图，如果当前有一个数组存储：[‘苹果’, ‘梨’, ‘香蕉’]</p>
 <p>使用 v-for 循环，渲染到页面上</p>
 <p>并将苹果置为<strong>被勾选状态</strong></p>
