@@ -239,8 +239,8 @@
 
 <h2 id="2-2-异步解码-decoding-x3D-”async”"><a href="#2-2-异步解码-decoding-x3D-”async”" class="headerlink" title="2.2 异步解码 decoding&#x3D;”async”"></a>2.2 异步解码 decoding&#x3D;”async”</h2><p><code>HTMLImageElement</code> 接口的 <code>decoding</code> 属性用于告诉浏览器使用何种方式解析图像数据。</p>
 <ul>
-<li>sync: 同步解码图像，保证与其他内容一起显示。</li>
-<li>async: 异步解码图像，加快显示其他内容。</li>
+<li>sync: 同步解码图像，这会阻止主线程，直到图像完全解码。</li>
+<li>async: 异步解码图像，不会阻止主线程。</li>
 <li>auto: 默认模式，表示不偏好解码模式。由浏览器决定哪种方式更适合用户。</li>
 </ul>
 <p>浏览器在进行图片渲染展示的过程中，是需要对图片文件进行解码的，这一个过程快慢与图片格式有关。</p>
