@@ -214,7 +214,7 @@
 <li><p>然后就是判断当前属性<strong>是数组还是对象</strong></p>
 </li>
 </ul>
-<h3 id="2-4-1-如果是数组"><a href="#2-4-1-如果是数组" class="headerlink" title="2.4.1 如果是数组"></a>2.4.1 如果是数组</h3><h6 id="先对数组的每一项进行监测"><a href="#先对数组的每一项进行监测" class="headerlink" title="先对数组的每一项进行监测"></a>先对数组的每一项进行监测</h6><p><strong>调用 observeArray()</strong> ，遍历数组，对每一元素调用 <code>observe()</code> 方法继续监测数据</p>
+<h3 id="2-4-1-如果是数组"><a href="#2-4-1-如果是数组" class="headerlink" title="2.4.1 如果是数组"></a>2.4.1 如果是数组</h3><h6 id="先对数组的每一项进行监测"><a href="#先对数组的每一项进行监测" class="headerlink" title="先对数组的每一项进行监测"></a>先对数组的每一项进行监测</h6><p><strong>调用 observeArray()</strong> ，遍历数组，对每一元素调用 <code>observe()</code> 方法将元素变为响应式数据</p>
 <p>这里的源码：</p>
 <blockquote>
 <p>vue-main\src\core\observer\index.ts</p>
@@ -246,7 +246,10 @@
 
 
 
-<h4 id="vue为什么没有提供对数组属性的监听呢？"><a href="#vue为什么没有提供对数组属性的监听呢？" class="headerlink" title="vue为什么没有提供对数组属性的监听呢？"></a>vue为什么没有提供对数组属性的监听呢？</h4><p>既然 Object.defineProperty 有劫持getter，setter能力，那么 vue 为什么没用它来实现对数组属性的监听呢？</p>
+<h4 id="vue为什么没有提供对数组属性的监听呢？"><a href="#vue为什么没有提供对数组属性的监听呢？" class="headerlink" title="vue为什么没有提供对数组属性的监听呢？"></a>vue为什么没有提供对数组属性的监听呢？</h4><ul>
+<li>如果通过索引修改数组、或修改数组长度，是无法被拦截到的</li>
+</ul>
+<p>既然 Object.defineProperty 有劫持getter，setter能力，那么 vue 为什么没用它来实现对数组属性的监听呢？</p>
 <p>尤大在<a href="https://link.juejin.cn/?target=https://github.com/vuejs/vue/issues/8562">github</a>上这样回答：</p>
 <div align="center">
     <img src="/2023/07/10/Vue2源码：数据劫持原理/1.jpg" style="height: 850px; width: 600px;">
